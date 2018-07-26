@@ -1,0 +1,63 @@
+i2c-0	smbus     	BC Local I2C                    	SMBus adapter
+i2c-1	smbus     	AOC 0                           	SMBus adapter
+i2c-2	smbus     	AOC 1                           	SMBus adapter
+i2c-3	smbus     	AOC 2                           	SMBus adapter
+i2c-4	smbus     	AOC 3                           	SMBus adapter
+i2c-5	smbus     	AOC 4                           	SMBus adapter
+i2c-14	smbus     	BB Micro I2C Bridge             	SMBus adapter
+i2c-15	smbus     	PDC 0                           	SMBus adapter
+i2c-16	smbus     	PDC 0 CPU Switch 0              	SMBus adapter
+i2c-17	smbus     	PDC 0 CPU Switch 1              	SMBus adapter
+i2c-18	smbus     	PDC 0 CPU Switch 2              	SMBus adapter
+i2c-19	smbus     	PDC 0 CPU Switch 3              	SMBus adapter
+i2c-20	smbus     	PDC 1                           	SMBus adapter
+i2c-21	smbus     	PDC 1 CPU Switch 0              	SMBus adapter
+i2c-22	smbus     	PDC 1 CPU Switch 1              	SMBus adapter
+i2c-23	smbus     	PDC 1 CPU Switch 2              	SMBus adapter
+i2c-24	smbus     	PDC 1 CPU Switch 3              	SMBus adapter
+i2c-90	smbus     	VLOC-0 n2c0 ssif                	SMBus adapter
+i2c-91	smbus     	VLOC-0 n2c0 ipmb                	SMBus adapter
+i2c-92	smbus     	VLOC-0 n2c1 ssif                	SMBus adapter
+i2c-93	smbus     	VLOC-0 n2c1 ipmb                	SMBus adapter
+i2c-94	smbus     	VLOC-0 n1c0 ssif                	SMBus adapter
+i2c-95	smbus     	VLOC-0 n1c0 ipmb                	SMBus adapter
+i2c-96	smbus     	VLOC-0 n1c1 ssif                	SMBus adapter
+i2c-97	smbus     	VLOC-0 n1c1 ipmb                	SMBus adapter
+i2c-98	smbus     	VLOC-1 n3c0 ssif                	SMBus adapter
+i2c-99	smbus     	VLOC-1 n3c0 ipmb                	SMBus adapter
+i2c-100	smbus     	VLOC-1 n3c1 ssif                	SMBus adapter
+i2c-101	smbus     	VLOC-1 n3c1 ipmb                	SMBus adapter
+i2c-102	smbus     	VLOC-1 n0c0 ssif                	SMBus adapter
+i2c-103	smbus     	VLOC-1 n0c0 ipmb                	SMBus adapter
+i2c-104	smbus     	VLOC-1 n0c1 ssif                	SMBus adapter
+i2c-105	smbus     	VLOC-1 n0c1 ipmb                	SMBus adapter
+i2c-110	smbus     	VLOC-0 i2c0-n2c0-vr             	SMBus adapter
+i2c-111	smbus     	VLOC-0 i2c1-n2c1-vr             	SMBus adapter
+i2c-112	smbus     	VLOC-0 i2c2-n1c0-vr             	SMBus adapter
+i2c-113	smbus     	VLOC-0 i2c3-n1c1-vr             	SMBus adapter
+i2c-114	smbus     	VLOC-0 i2c4-n2-ecb              	SMBus adapter
+i2c-115	smbus     	VLOC-0 i2c5-n1-ecb              	SMBus adapter
+i2c-116	smbus     	VLOC-0 i2c6-n2c0-io             	SMBus adapter
+i2c-117	smbus     	VLOC-0 i2c7-n2c1-io             	SMBus adapter
+i2c-118	smbus     	VLOC-0 i2c8-n1c0-io             	SMBus adapter
+i2c-119	smbus     	VLOC-0 i2c9-n1c1-io             	SMBus adapter
+i2c-120	smbus     	VLOC-0 i2c10-vrcfg              	SMBus adapter
+i2c-121	smbus     	VLOC-0 vrcfg n1c0 pm            	SMBus adapter
+i2c-122	smbus     	VLOC-0 vrcfg n1c1 pm            	SMBus adapter
+i2c-123	smbus     	VLOC-0 vrcfg n2c0 pm            	SMBus adapter
+i2c-124	smbus     	VLOC-0 vrcfg n2c1 pm            	SMBus adapter
+i2c-129	smbus     	VLOC-1 i2c0-n3c0-vr             	SMBus adapter
+i2c-130	smbus     	VLOC-1 i2c1-n3c1-vr             	SMBus adapter
+i2c-131	smbus     	VLOC-1 i2c2-n0c0-vr             	SMBus adapter
+i2c-132	smbus     	VLOC-1 i2c3-n0c1-vr             	SMBus adapter
+i2c-133	smbus     	VLOC-1 i2c4-n3-ecb              	SMBus adapter
+i2c-134	smbus     	VLOC-1 i2c5-n0-ecb              	SMBus adapter
+i2c-135	smbus     	VLOC-1 i2c6-n3c0-io             	SMBus adapter
+i2c-136	smbus     	VLOC-1 i2c7-n3c1-io             	SMBus adapter
+i2c-137	smbus     	VLOC-1 i2c8-n0c0-io             	SMBus adapter
+i2c-138	smbus     	VLOC-1 i2c9-n0c1-io             	SMBus adapter
+i2c-139	smbus     	VLOC-1 i2c10-vrcfg              	SMBus adapter
+i2c-140	smbus     	VLOC-1 vrcfg n0c0 pm            	SMBus adapter
+i2c-141	smbus     	VLOC-1 vrcfg n0c1 pm            	SMBus adapter
+i2c-142	smbus     	VLOC-1 vrcfg n3c0 pm            	SMBus adapter
+i2c-143	smbus     	VLOC-1 vrcfg n3c1 pm            	SMBus adapter

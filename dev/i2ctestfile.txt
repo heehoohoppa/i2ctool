@@ -1,0 +1,55 @@
+Error: I2CBUS argument not a number!
+Syntax: i2cdetect [-y] [-a] [-q|-r] I2CBUS [FIRST LAST]
+        i2cdetect -F I2CBUS
+        i2cdetect -l
+        i2cdetect -V
+  I2CBUS is an integer
+  With -a, probe all addresses (NOT RECOMMENDED)
+  With -q, uses only quick write commands for probing (NOT RECOMMENDED)
+  With -r, uses only read byte commands for probing (NOT RECOMMENDED)
+  If provided, FIRST and LAST limit the probing range.
+  With -l, lists installed busses only
+        Cray added flags:
+        -d: Print "UU" for I2C devices owned by a driver
+        -s: Don't sort I2C busses by number when doing an "i2cdetect -l"
+  Installed I2C busses:
+    i2c-100     smbus           VLOC-1 n3c1 ssif
+    i2c-101     smbus           VLOC-1 n3c1 ipmb
+    i2c-102     smbus           VLOC-1 n0c0 ssif
+    i2c-103     smbus           VLOC-1 n0c0 ipmb
+    i2c-104     smbus           VLOC-1 n0c1 ssif
+    i2c-105     smbus           VLOC-1 n0c1 ipmb
+    i2c-129     smbus           VLOC-1 i2c0-n3c0-vr
+    i2c-130     smbus           VLOC-1 i2c1-n3c1-vr
+    i2c-131     smbus           VLOC-1 i2c2-n0c0-vr
+    i2c-132     smbus           VLOC-1 i2c3-n0c1-vr
+    i2c-133     smbus           VLOC-1 i2c4-n3-ecb
+    i2c-134     smbus           VLOC-1 i2c5-n0-ecb
+    i2c-135     smbus           VLOC-1 i2c6-n3c0-io
+    i2c-136     smbus           VLOC-1 i2c7-n3c1-io
+    i2c-137     smbus           VLOC-1 i2c8-n0c0-io
+    i2c-138     smbus           VLOC-1 i2c9-n0c1-io
+    i2c-139     smbus           VLOC-1 i2c10-vrcfg
+    i2c-140     smbus           VLOC-1 vrcfg n0c0 pm
+    i2c-141     smbus           VLOC-1 vrcfg n0c1 pm
+    i2c-142     smbus           VLOC-1 vrcfg n3c0 pm
+    i2c-143     smbus           VLOC-1 vrcfg n3c1 pm
+    i2c-0       smbus           BC Local I2C
+    i2c-1       smbus           AOC 0
+    i2c-2       smbus           AOC 1
+    i2c-3       smbus           AOC 2
+    i2c-4       smbus           AOC 3
+    i2c-5       smbus           AOC 4
+    i2c-14      smbus           BB Micro I2C Bridge
+    i2c-15      smbus           PDC 0
+    i2c-16      smbus           PDC 0 CPU Switch 0
+    i2c-17      smbus           PDC 0 CPU Switch 1
+    i2c-18      smbus           PDC 0 CPU Switch 2
+    i2c-19      smbus           PDC 0 CPU Switch 3
+    i2c-20      smbus           PDC 1
+    i2c-21      smbus           PDC 1 CPU Switch 0
+    i2c-22      smbus           PDC 1 CPU Switch 1
+    i2c-23      smbus           PDC 1 CPU Switch 2
+    i2c-24      smbus           PDC 1 CPU Switch 3
+    i2c-98      smbus           VLOC-1 n3c0 ssif
+    i2c-99      smbus           VLOC-1 n3c0 ipmb
