@@ -1,5 +1,6 @@
 import helperFunctions as helper
 import SMWClient as client
+import csvlib as csvlib
 
 print "I2C Interface Program"
 print "Property of: Cray"
@@ -7,13 +8,15 @@ print "Made by the best intern ever: Will Scott"
 print "Use \"help\" at any time to get the corresponding commands"
 print ""
 
-################# global usage variables ######################
+################# global usage variables #####################
 global bus_num
 global dev_num
 bus_num = "-1"
-dev_num = 0x00
+dev_num = "00"
+csvfilename = "../Device List.csv"
+exh_bus_list = csvlib.csv_to_bus_list(csvfilename)
 
-################# Initiate your SMW class ###################
+################# Initiate your SMW class ####################
 out = raw_input("cname: ")
 smw = client.SMWClient(out)
 while smw.checkCname() == 0:
@@ -38,23 +41,35 @@ def board_level(argument, smw):
 		pass 	# may be best to leave as a CSV
 
 	elif args[0] == "goto_bus":
-		bus_num = args[1]
-		killswitch = smw.callCmd(["cd /dev/bus/i2c/devices/i2c-" + bus_num])  		# TODO: double check that an empty cd actually overrides the output
-		if killswitch != "":
-			print "Error: invalid bus number"
-			bus_num = -1
-		else:
-			return "bus"
+		try:
+			bus_num = args[1]
+			# Check to see if the bus exists
+			killswitch = smw.callCmd(["cd /dev/bus/i2c/devices/i2c-" + bus_num])  		# TODO: double check that an empty cd actually overrides the output
+			if killswitch != "":
+				print "Error: invalid bus number"
+				bus_num = -1
+			else:
+				return "bus"
+		except:
+			# try/except will ensure we actually have a args[1]
+			print "usage: goto_bus <busnum>"
 	
 	elif args[0] == "buses" or args[0] == "bus_list":
+		# TODO: Give this function a whirl
+		# TODO: offload all of this into helperFunctions, this should literally just be function calls
 		try:
 			if args[1] == "-a":
 				helper.print_all_buses(smw)
 			else:
-				foo = helper.print_buses(smw)
+				buses = helper.get_buses(smw)
 		except:	
-			foo = helper.print_buses(smw)
-		print foo
+			buses = helper.get_buses(smw)
+		active_bus_list = []
+		for i in buses:
+			index = csvlib.find_index(i, exh_bus_list)
+			if index != -1:
+				active_bus_list.append(exh_bus_list[index])	
+		print active_bus_list
 
 	elif args[0] == "walk_bus":
 		helper.walk_bus(smw, args[1])
@@ -98,8 +113,17 @@ def board_level(argument, smw):
 def bus_level(argument, smw):
 	args = argument.split()
 	
-	if args[0] == "walk" or args[0] == "walk_bus": 		# have a -p/-m flag for "only display present/missing devices"
-		helper.walk_bus(bus_num)
+	if args[0] == "walk" or args[0] == "walk_bus":
+		# TODO: have a -p/-m flag for "only display present/missing devices"
+		# TODO: Actually compare these devices to everything else
+		try:
+			if args[1] == "-p":
+				helper.walk_bus(smw, bus_num, exh_bus_list)
+			elif args[1] == "-m":
+				helper.walk_bus(smw, bus_num, exh_bus_list)
+		except:
+			helper.walk_bus(smw, bus_num, exh_bus_list)
+		
 	
 	elif args[0] == "get_device":
 		pass

@@ -1,14 +1,7 @@
-f = open('i2ctemp.txt', 'r')
-text_holder = f.read()
+import csvlib as csvlib
 
-index = text_holder.find("\n")
+bus_list = csvlib.csv_to_bus_list("Device List.csv")
 
-while index != -1:
-    
-# for line in var:
-#     try:
-#         print int(line[4:7])
-#     except:
-#         print int(line[4:6])
+for item in bus_list:
+    print item
 
-f.close()

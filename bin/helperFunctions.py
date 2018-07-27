@@ -1,11 +1,12 @@
 # from csiclient import CSISocket
 import csv
+import csvlib as csvlib
 
 # Looks like csi.client("i2cdetect") is how to do this
 
 ####################################################################
 ########################### Board Levels ###########################
-def print_buses(smw):
+def get_buses(smw):
 	# Function returns a list of the bus numbers on the device and
 	#  the name of each
 	text_holder = smw.callCmd("/usr/sbin/i2cdetect -l")
@@ -26,29 +27,35 @@ def print_buses(smw):
 
 def print_all_buses(smw):
 	# TODO: This whole function
-	present_buses = print_buses(smw)
+	present_buses = get_buses(smw)
 	return present_buses
 
 
 
 ###################################################################
 ########################### Bus Levels ############################
-def walk_bus(smw, bus_number):
+def walk_bus(smw, bus_number, exh_bus_list):
 	# TODO: display what each device is. We may want to scrap this method and re-do it
 	#   	by searching the i2c-xxx directories
 	# text_holder = call(["i2cdetect", "-y", "bus_number"])
 	
-	# TODO: Ensure the bus number actually exists
 	text_holder = smw.callCmd(["/usr/sbin/i2cdetect -y " + bus_number])
 	text_holder = text_holder[(text_holder.find("\n")+1):]
 	arr = text_holder.split()
 	addresses = []
-
+	# Parse the text_holder, stick the addresses found in 'addresses'
 	for i in range(0,len(arr)):
 		if arr[i] != "--" and arr[i].find(":") == -1:
-			addresses.append(int(arr[i], 16))
+			addresses.append(arr[i])
 
-	return addresses
+	# Get your current bus
+	index = csvlib.find_index(bus_number, exh_bus_list)
+	current_bus = exh_bus_list[index] 	# TODO: make sure this actually COPIES it, not points at it
+	# Iterate over the addresses and print them out
+	for i in addresses:
+		print current_bus.getDevice(i)
+
+
 
 def compare_addresses(input_addresses, stored_addresses):
 	pass
@@ -77,7 +84,6 @@ def populate_device_list(csv_file, bus_nums):
 		csvline = csv.reader(csvfile, dialect='excel')
 		next(csvline, None)
 
-		counter = 0
 		for row in csvline:
 			if row[0]:
 				i2c_bus = int(row[0])
