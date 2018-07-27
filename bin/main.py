@@ -1,7 +1,9 @@
 import helperFunctions as helper
 import SMWClient as client
 import csvlib as csvlib
+from copy import deepcopy
 
+print ""
 print "I2C Interface Program"
 print "Property of: Cray"
 print "Made by the best intern ever: Will Scott"
@@ -9,11 +11,9 @@ print "Use \"help\" at any time to get the corresponding commands"
 print ""
 
 ################# global usage variables #####################
-global bus_num
-global dev_num
 bus_num = "-1"
 dev_num = "00"
-csvfilename = "../Device List.csv"
+csvfilename = "Device List.csv"
 exh_bus_list = csvlib.csv_to_bus_list(csvfilename)
 
 ################# Initiate your SMW class ####################
@@ -33,7 +33,9 @@ while smw.checkCname() == 0:
 
 def board_level(argument, smw):
 	args = argument.split()
-	
+	global bus_num
+	global dev_num
+
 	if args[0] == "get_board":
 		pass
 
@@ -41,18 +43,19 @@ def board_level(argument, smw):
 		pass 	# may be best to leave as a CSV
 
 	elif args[0] == "goto_bus":
-		try:
-			bus_num = args[1]
-			# Check to see if the bus exists
-			killswitch = smw.callCmd(["cd /dev/bus/i2c/devices/i2c-" + bus_num])  		# TODO: double check that an empty cd actually overrides the output
-			if killswitch != "":
-				print "Error: invalid bus number"
-				bus_num = -1
-			else:
-				return "bus"
-		except:
-			# try/except will ensure we actually have a args[1]
-			print "usage: goto_bus <busnum>"
+		# try:
+		# 	bus_num = args[1]
+		# 	# Check to see if the bus exists
+		# 	killswitch = smw.callCmd(["cd /sys/bus/i2c/devices/i2c-" + bus_num])  		# TODO: double check that an empty cd actually overrides the output
+		# 	if killswitch != "":
+		# 		print "Error: invalid bus number"
+		# 		bus_num = -1
+		# 	else:
+		# 		return "bus"
+		# except:
+		# 	print "usage: goto_bus <busnum>"
+		bus_num = deepcopy(args[1])
+		return "bus"
 	
 	elif args[0] == "buses" or args[0] == "bus_list":
 		# TODO: Give this function a whirl
@@ -64,16 +67,23 @@ def board_level(argument, smw):
 				buses = helper.get_buses(smw)
 		except:	
 			buses = helper.get_buses(smw)
-		active_bus_list = []
+		# active_bus_list = []
+		# for i in buses:
+		# 	index = csvlib.find_index(i, exh_bus_list)
+		# 	if index != -1:
+		# 		active_bus_list.append(exh_bus_list[index])
+		# print active_bus_list
 		for i in buses:
 			index = csvlib.find_index(i, exh_bus_list)
 			if index != -1:
-				active_bus_list.append(exh_bus_list[index])	
-		print active_bus_list
+				print exh_bus_list[index]
 
 	elif args[0] == "walk_bus":
-		helper.walk_bus(smw, args[1])
-	
+		try:
+			helper.walk_bus(smw, args[1], exh_bus_list)
+		except:
+			print "usage: walk_bus <busnum>"
+
 	elif args[0] == "pop_by_type":
 		pass
 	
@@ -90,14 +100,19 @@ def board_level(argument, smw):
 		else:
 			smw = temp_smw
 	
-	elif args[0] == "get_ps":
-		pass
-	
-	elif args[0] == "adv_ps":
-		pass
+	elif args[0] == "get_ps" or args[0] == "node_ps":
+		try:
+			print smw.callCmd("/opt/cray/bin/node_ps " + args[1])
+		except:
+			print "usage: [ get_ps || node_ps ] <node>"
+
+	elif args[0] == "adv_ps" or args[0] == "ss_pu":
+		try:
+			smw.callCmd("/opt/cray/bin/ss_pu " + args[1])
+		except:
+			print "usage: [ adv_ps || ss_pu ] <node>"
 	
 	elif args[0] == "cmd":
-		# TODO: double check this works as intended with the callCmd method
 		args.pop(0)
 		args = " ".join(args)
 		print smw.callCmd(args)
@@ -112,21 +127,26 @@ def board_level(argument, smw):
 
 def bus_level(argument, smw):
 	args = argument.split()
-	
+	global bus_num
+	global dev_num
+
 	if args[0] == "walk" or args[0] == "walk_bus":
-		# TODO: have a -p/-m flag for "only display present/missing devices"
-		# TODO: Actually compare these devices to everything else
 		try:
 			if args[1] == "-p":
-				helper.walk_bus(smw, bus_num, exh_bus_list)
+				helper.walk_bus(smw, bus_num, exh_bus_list, 'present')
 			elif args[1] == "-m":
-				helper.walk_bus(smw, bus_num, exh_bus_list)
+				helper.walk_bus(smw, bus_num, exh_bus_list, 'missing')
 		except:
 			helper.walk_bus(smw, bus_num, exh_bus_list)
 		
 	
 	elif args[0] == "get_device":
-		pass
+		# need to cat through the device and find its properties
+		try:
+			pass #device = 
+
+		except:
+			print "usage: get_device <hexaddr>"
 	
 	elif args[0] == "disp_types":
 		pass
@@ -134,14 +154,20 @@ def bus_level(argument, smw):
 	elif args[0] == "exit":
 		return "exit"
 	
-	elif args[0] == "return":
-		pass
+	elif args[0] == "return" or args[0] == "back" or args[0] == "up":
+		return "board"
 	
-	elif args[0] == "get_ps":
-		pass
-	
-	elif args[0] == "adv_ps":
-		pass
+	elif args[0] == "get_ps" or args[0] == "node_ps":
+		try:
+			smw.callCmd("node_ps " + args[1])
+		except:
+			print "usage: [ get_ps || node_ps ] <node>"
+
+	elif args[0] == "adv_ps" or args[0] == "ss_pu":
+		try:
+			smw.callCmd("ss_pu " + args[1])
+		except:
+			print "usage: [ adv_ps || ss_pu ] <node>"
 	
 	elif args[0] == "anc":
 		pass
@@ -156,7 +182,9 @@ def bus_level(argument, smw):
 
 def device_level(argument, smw):
 	args = argument.split()
-	
+	global bus_num
+	global dev_num
+
 	if args[0] == "printregs":
 		pass
 	

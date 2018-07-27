@@ -1,82 +1,89 @@
 from csv import reader
+from copy import deepcopy
 
+######################################################################
 class device(object):
-
-    def __init__(self, address, name, partnum):
+    ####################### Necessaries ####################
+    def __init__(self, parent_bus, address, name, partnum):
+        self.parent_bus = parent_bus
         self.address = address
         self.name = name
         self.partnum = partnum
         self.isPresent = False
 
     def __str__(self):
-        out = "    0x" + self.address + ": " + self.name
-        # if isPresent:
-        #     out = out + "  not present"
-        # else:
-        #     out = out + "  present"
-
+        if self.isPresent:
+            return "    0x" + self.address + ":(+) " + self.name 
+        else:
+            return "    0x" + self.address + ":(-) " + self.name
     def __repr__(self):
-        return "    0x" + self.address + ": " + self.name 
+        if self.isPresent:
+            return "    0x" + self.address + ":(+) " + self.name 
+        else:
+            return "    0x" + self.address + ":(-) " + self.name 
 
+    ###################### Getters/Setters ######################
     def setIsPresent(self, isPresent):
         self.isPresent = isPresent
 
     def getIsPresent(self):
-        if(self.isPresent):
-            print "device is active"
-        else:
-            print "device not found"
+        return self.isPresent
 
     def getAddr(self):
         return self.address
 
+    ###################### Useful Methods #######################
+    def printProperties(self, smw):
+        pass #folder = smw.callCmd("ls " + )
 
 
+######################################################################
 class bus(object):
-    '''
-        Class to handle a single bus
-    '''
+    ######################## Necessaries #####################
     def __init__(self, bus_number, bus_name, path):
-        # So, could we have that csvmatrix or whatever be a global thing?
-        #  We kinda need everyone to be able to access it
         self.bus_number = bus_number
         self.bus_name = bus_name
         self.path = path
         self.devices = []
     
     def __str__(self):
-        return self.bus_number + ": " + self.bus_name + "\n\r"
+        return self.bus_number + ": " + self.bus_name
+    def __repr__(self):
+        return self.bus_number + ": " + self.bus_name
 
-    def printAll(self):
-        print self.bus_number + ": " + self.bus_name + "\n\r"
+    ###################### Device Printers ##########################
+    def printDevices(self):
+        print self.bus_number + ": " + self.bus_name
         for dev in self.devices:
-            print `dev` + "\n\r"
-
-    def addDevice(self, address, name, partnum):
-        # only used as part of creating the class. Shouldn't be touched too much.
-        self.devices.append(device(address, name, partnum))
-    
-    def getDevice(self, addr):
+            print `dev`
+    def printPresentDevices(self):
+        print self.bus_number + ": " + self.bus_name
         for dev in self.devices:
-            if dev.getAddr() == str(addr):
-                return dev
+            if dev.getIsPresent():
+                print `dev`
+    def printMissingDevices(self):
+        print self.bus_number + ": " + self.bus_name
+        for dev in self.devices:
+            if not dev.getIsPresent():
+                print `dev`
 
-
+    ####################### Useful Stuff ########################
     def setDevicePresences(self, addrs):
         for d in self.devices:
             if d.getAddr() in addrs:
                 d.setIsPresent(True)
             else:
                 d.setIsPresent(False)
+
+    ###################### Getters/Setters ######################
+    def addDevice(self, address, name, partnum):
+        # only used as part of creating the class. Shouldn't be touched too much.
+        self.devices.append(device(self.bus_number, address, name, partnum))
     
-    def printDevices(self, onlyPresent=False):
-        if onlyPresent:
-            for dev in self.devices:
-                if dev.getIsPresent():
-                    print `dev` + "\n\r"
-        else:
-            for dev in self.devices:
-                print `dev` + "\n\r"
+    def getDevice(self, addr):
+        for dev in self.devices:
+            if dev.getAddr() == str(addr):
+                return dev
 
     def getNum(self):
         return self.bus_number
@@ -84,9 +91,10 @@ class bus(object):
     def getName(self):
         return self.bus_name
 
-    
 
-
+########################################################################
+########################################################################
+########################### Other Functions ############################
 
 def csv_to_bus_list(filename):
     bus_list = []
@@ -106,13 +114,14 @@ def csv_to_bus_list(filename):
     
 def find_index(bus_num, bus_list):
     # Gonna binary search this bitch
+    bus_num = int(bus_num)
     L = 0
     R = len(bus_list) - 1
     while L < R:
         tracker = int((L+R)/2)
-        if bus_list[tracker].getNum() > bus_num:
+        if int(bus_list[tracker].getNum()) < bus_num:
             L = tracker + 1
-        elif bus_list[tracker].getNum() < bus_num:
+        elif int(bus_list[tracker].getNum()) > bus_num:
             R = tracker - 1
         else:
             return tracker
@@ -120,7 +129,6 @@ def find_index(bus_num, bus_list):
 
 def check_bus(smw):
     pass
-
 
 def check_device(smw):
     pass

@@ -1,4 +1,4 @@
-from subprocess import call
+import subprocess
 
 class SMWClient(object):
     ''' Class to handle interacting with the BC. Creating a SMWClient object just
@@ -14,17 +14,17 @@ class SMWClient(object):
         ''' Send a silent command to the remote host (cname), dump the output to a text file
             on the BC, bring the text file back to the SMW, and print the textfile's output
         '''
-        call(["rsh", "-l", "root", str(self.cname), str(cmd), ">", "/tmp/i2ctemp.txt"])
-        # call(["rsh", "-l", "root", self.cname, cmd + "> /tmp/i2ctemp.txt"])
-            # rcp command automatically overwrites the file, so dont' have to worry about
-            #  having an infinitely long text file
-        call(["rcp", "-r", 
-            "root@" + self.cname + ":/tmp/i2ctemp.txt",
-            "."])
-            # we now have the output in a local textfile
-        f = open("./i2ctemp.txt", "r")
-        out = f.read()
-        f.close()
+        cmd = "rsh -l root " + str(self.cname) + " " + cmd
+        p = subprocess.Popen(cmd, shell=True, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, close_fds=True)
+        out = p.stdout.read()
+        
+        # call(["rcp", "-r", 
+        #     "root@" + self.cname + ":/tmp/i2ctemp.txt",
+        #     "."])
+        #     # we now have the output in a local textfile
+        # f = open("./i2ctemp.txt", "r")
+        # out = f.read()
+        # f.close()
         return out
 
 
