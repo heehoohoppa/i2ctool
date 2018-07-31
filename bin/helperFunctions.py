@@ -35,8 +35,7 @@ def print_all_buses(smw):
 ###################################################################
 ########################### Bus Levels ############################
 def walk_bus(smw, bus_number, exh_bus_list, pm='none'):
-	# TODO: display what each device is. We may want to scrap this method and re-do it
-	#   	by searching the i2c-xxx directories
+	# TODO: display what each device is. Gonna do a lot of i2cget and i2cdump
 	
 	text_holder = smw.callCmd("/usr/sbin/i2cdetect -y " + bus_number)
 	text_holder = text_holder[(text_holder.find("\n")+1):]
@@ -60,10 +59,47 @@ def walk_bus(smw, bus_number, exh_bus_list, pm='none'):
 	elif pm == 'missing':
 		current_bus.printMissingDevices()
 
+	# print the unknown devices
+	unknown_addresses = current_bus.getMissingDevices(addresses)
+	if len(unknown_addresses) > 0:
+		for addr in unknown_addresses:
+			try:
+				if len(addr) == 1:
+					filepath = "/sys/bus/i2c/devices/i2c-" + str(bus_number) + "/" + str(bus_number) + "000" + str(addr) + "/name"
+				elif len(addr) == 2:
+					filepath = "/sys/bus/i2c/devices/i2c-" + str(bus_number) + "/" + str(bus_number) + "00" + str(addr) + "/name"
+				elif len(addr) == 3:
+					filepath = "/sys/bus/i2c/devices/i2c-" + str(bus_number) + "/" + str(bus_number) + "0" + str(addr) + "/name"
+				name = smw.callCmd("cat " + filepath)
+				print "    0x" + addr + ":(+) " + name
+			except:
+				print "    0x" + addr + ":(+) present, but can't find name"
+	return
 
+def create_bus(smw, bus_num, exh_bus_list):
+	index = csvlib.find_index(bus_num, exh_bus_list)
+	if index != -1:
+		bus_name = exh_bus_list[index].getName()
+		path = exh_bus_list[index].getPath()
+	else:
+		print "invalid bus number"
+		return
+	out_bus = csvlib.bus(bus_num, bus_name, path)
 
-def compare_addresses(input_addresses, stored_addresses):
-	pass
+	# Iterate and add the devices 
+	text_holder = smw.callCmd("/usr/sbin/i2cdetect -y " + bus_num)
+	text_holder = text_holder[(text_holder.find("\n")+1):]
+	arr = text_holder.split()
+	addresses = []
+	# Parse the text_holder, stick the addresses found in 'addresses'
+	for i in range(0,len(arr)):
+		if arr[i] != "--" and arr[i].find(":") == -1:
+			addresses.append(arr[i])
+	ref_addrs = exh_bus_list[index].getAddresses()
+	# Okay we have the addresses, now we just need to populate it and get the corresponding properties
+	for a in ref_addrs:
+		pass
+	return out_bus
 
 
 
@@ -82,26 +118,12 @@ def compare_addresses(input_addresses, stored_addresses):
 
 	Return: list of class Device().
 '''
-# def populate_device_list(csv_file, bus_nums):
-# 	device_list = []
+def check_device(smw, bus, address):
+	pass
 
-# 	with open(csv_file, 'rb') as csvfile:
-# 		csvline = csv.reader(csvfile, dialect='excel')
-# 		next(csvline, None)
+def print_device(smw, bus, address):
+	pass # First check if the device 
 
-# 		for row in csvline:
-# 			if row[0]:
-# 				i2c_bus = int(row[0])
-# 				i2c_bus_name = row[1]
-# 			if i2c_bus in bus_nums and not row[0]:
-# 				address = int(row[2], 16)
-# 				device_name = row[3]
-# 				part_num = row[4]
-# 				file_path = row[5]
-# 				device_list.append(device_lists.Device(i2c_bus, i2c_bus_name, address, file_path))
-
-
-# 	return device_list
 
 
 

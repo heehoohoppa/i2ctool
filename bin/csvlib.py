@@ -41,6 +41,7 @@ class device(object):
 class bus(object):
     ######################## Necessaries #####################
     def __init__(self, bus_number, bus_name, path):
+        # Note everything is always in strings, not ints
         self.bus_number = bus_number
         self.bus_name = bus_name
         self.path = path
@@ -84,12 +85,33 @@ class bus(object):
         for dev in self.devices:
             if dev.getAddr() == str(addr):
                 return dev
+    
+    def getMissingDevices(self, addrs):
+        out = []
+        found = False
+        for a in addrs:
+            for d in self.devices:
+                if d.getAddr() == a:
+                    found = True
+                    break
+            if not found:
+                out.append(a)
+        return out
 
     def getNum(self):
         return self.bus_number
     
     def getName(self):
         return self.bus_name
+    
+    def getPath(self):
+        return self.path
+
+    def getAddresses(self):
+        out = []
+        for d in self.devices:
+            out.append(d.getAddr())
+        return out
 
 
 ########################################################################
@@ -111,7 +133,7 @@ def csv_to_bus_list(filename):
                 bus_list[len(bus_list)-1].addDevice(row[2], row[3], row[4])
     return bus_list
 
-    
+
 def find_index(bus_num, bus_list):
     # Gonna binary search this bitch
     bus_num = int(bus_num)
