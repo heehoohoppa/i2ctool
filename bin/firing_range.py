@@ -1,17 +1,20 @@
-import csvlib as csvlib
-import helperFunctions as helper 
-import SMWClient as SMWClient
-from copy import deepcopy
 
-bus_list = csvlib.csv_to_bus_list("Device List.csv")
+def uzi(bullet):
+    print "Uzi %s %s" % (bullet[0], bullet[1])
+def ak47(bullet):
+    print "Ak %s" % (bullet)
+def water(bullet, clip):
+    print "Water %s %s" % (bullet, clip)
 
-index = csvlib.find_index(14, bus_list)
-bus = deepcopy(bus_list[index])
-addresses = ['19', '20', '30', '4B', '4C', '70']
+my_dict = {
+    "one": "fun",
+    "two": uzi,
+    "three": ak47,
+    "four": water
+}
 
-something = False
+args = ["bang"]
+args1 = ["bing", "bong"]
 
-bus.addDevice('99', 'Test Thing', '100100100')
-bus.printDevices()
-bus_list[index].printDevices()
+my_dict["three"](args1, args)
 

@@ -15,7 +15,7 @@ bus_num = "-1"
 dev_num = "00"
 bus_obj = csvlib.bus(0,"empty","empty")
 csvfilename = "Device List.csv"
-exh_bus_list = csvlib.csv_to_bus_list(csvfilename)
+exh_bus_list = helper.csv_to_bus_list(csvfilename)
 
 ################# Initiate your SMW class ####################
 out = raw_input("cname: ")
@@ -73,7 +73,7 @@ def board_level(argument, smw):
 			buses = helper.get_buses(smw)
 
 		for i in buses:
-			index = csvlib.find_index(i, exh_bus_list)
+			index = helper.find_index(i, exh_bus_list)
 			if index != -1:
 				print exh_bus_list[index]
 
@@ -192,7 +192,8 @@ def device_level(argument, smw):
 
 	if args[0] == "printregs":
 		pass
-		# now we need to actually figure out 
+		# now we need to actually figure out how the FUCK
+		#  we're going to organize this
 	
 	elif args[0] == "watchregs":
 		pass
@@ -221,6 +222,8 @@ def device_level(argument, smw):
 		pass
 	
 	else:
+		# have a device object here to
+		#TODO: currentdevice.handleCommand(args)
 		print args[0] + ": invalid command"
 
 	return "device"

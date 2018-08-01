@@ -1,5 +1,5 @@
 # from csiclient import CSISocket
-import csv
+from csv import reader
 import csvlib as csvlib
 from copy import deepcopy
 
@@ -47,7 +47,7 @@ def walk_bus(smw, bus_number, exh_bus_list, pm='none'):
 			addresses.append(arr[i])
 
 	# Get your current bus
-	index = csvlib.find_index(bus_number, exh_bus_list)
+	index = find_index(bus_number, exh_bus_list)
 	current_bus = deepcopy(exh_bus_list[index])
 	# Set the presence of the devices
 	current_bus.setDevicePresences(addresses)
@@ -77,7 +77,7 @@ def walk_bus(smw, bus_number, exh_bus_list, pm='none'):
 	return
 
 def create_bus(smw, bus_num, exh_bus_list):
-	index = csvlib.find_index(bus_num, exh_bus_list)
+	index = find_index(bus_num, exh_bus_list)
 	if index != -1:
 		bus_name = exh_bus_list[index].getName()
 		path = exh_bus_list[index].getPath()
@@ -144,3 +144,42 @@ def bus_help():
 
 def dev_help():
 	print "gonna need a lot of very pretty print statements here"
+
+#################################################################
+######################## Useful Functions #######################
+def csv_to_bus_list(filename):
+    bus_list = []
+    current_bus = '-1'
+    with open(filename, 'rb') as csvfile:       # 'rb'?
+        iterable = reader(csvfile)
+        iterable.next()
+        for row in iterable:
+            if(row[0] != current_bus):
+                bus_list.append(csvlib.bus(row[0], row[1], row[5]))
+                bus_list[len(bus_list)-1].addDevice(row[2], row[3], row[4])
+                current_bus = row[0]
+            else:
+                bus_list[len(bus_list)-1].addDevice(row[2], row[3], row[4])
+    return bus_list
+
+
+def find_index(bus_num, bus_list):
+    # Gonna binary search this bitch
+    bus_num = int(bus_num)
+    L = 0
+    R = len(bus_list) - 1
+    while L < R:
+        tracker = int((L+R)/2)
+        if int(bus_list[tracker].getNum()) < bus_num:
+            L = tracker + 1
+        elif int(bus_list[tracker].getNum()) > bus_num:
+            R = tracker - 1
+        else:
+            return tracker
+    return -1
+
+def check_bus(smw):
+    pass
+
+def check_device(smw):
+    pass
