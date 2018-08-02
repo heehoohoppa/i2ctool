@@ -222,8 +222,10 @@ def device_level(argument, smw):
 		pass
 	
 	else:
-		# have a device object here to
-		#TODO: currentdevice.handleCommand(args)
+		passing_args = [args[0], smw]
+		for i in args[1:]:
+			passing_args.append(i)
+		#TODO: currentdevice.handleCommand(passing_args)
 		print args[0] + ": invalid command"
 
 	return "device"

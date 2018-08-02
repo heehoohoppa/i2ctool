@@ -1,5 +1,76 @@
 from copy import deepcopy
 
+def lin11_to_dec(arg):
+    # input will be 16-bit hex
+    # output x = y * 2**n
+    num = int(arg, 16)
+    mask = 0b0000011111111111
+
+    lower = num & mask
+    if len(str(bin(lower))) == 13:
+        # perform two's compliment operator, then take the negative
+        lower = lower ^ mask
+        lower += 1
+        y = 0 - lower
+    elif len(str(bin(lower))) > 13:
+        print "error: greater than 11 bits for lower"
+    else:
+        y = lower
+
+    mask = 0b1111100000000000
+    upper = num & mask
+    if len(str(bin(upper))) == 7:
+        # perform two's compliment operator, then take the negative
+        upper = upper ^ mask
+        upper += 1
+        n = 0 - upper
+    elif len(str(bin(upper))) > 7:
+        print "error: greater than 5 bits for upper"
+    else:
+        n = upper
+
+    return (y * 2**n)
+
+def lin16_to_dec(arg):
+    # input will be 16-bit hex
+    # output x = y * 2**n
+    num = int(arg, 16)
+    mask = 0b0000011111111111
+
+    lower = num & mask
+    if len(str(bin(lower))) == 13:
+        # perform two's compliment operator, then take the negative
+        lower = lower ^ mask
+        lower += 1
+        y = 0 - lower
+    elif len(str(bin(lower))) > 13:
+        print "error: greater than 11 bits for lower"
+    else:
+        y = lower
+
+    mask = 0b1111100000000000
+    upper = num & mask
+    if len(str(bin(upper))) == 7:
+        # perform two's compliment operator, then take the negative
+        upper = upper ^ mask
+        upper += 1
+        n = 0 - upper
+    elif len(str(bin(upper))) > 7:
+        print "error: greater than 5 bits for upper"
+    else:
+        n = upper
+        
+    return (y * 2**n)
+
+def disp_all_number_formats(arg):
+    # takes a in a hexadecimal string, method prints all variants of the number
+    integer = int(arg, 16)
+    binary = bin(integer)
+    lin11 = lin11_to_dec(arg)
+    lin16 = lin16_to_dec(arg)
+    print "    hexadecimal |   integer   |  linear11  |  linear16  |  binary"
+    print "       %-12s %-12d %-12d %-12d %s" % (arg, integer, lin11, lin16, binary)
+
 ######################################################################
 class device(object):
     ####################### Necessaries ####################
@@ -116,6 +187,7 @@ class bus(object):
 ########################################################################
 ####################### Specific Device Classes ########################
 class voltageRegulator(device):
+    ##################### Lists and Dictionaries ########################
     #             cmd                        hex  #bytes willdisplay
     cmd = [ ["OPERATION",                   "01",   1,  False],
             ["ON_OFF_CONFIG",               "02",   1,  False],
@@ -186,12 +258,35 @@ class voltageRegulator(device):
             ["MFR_IOUT_PEAK",               "DC",   2,  True],
             ["MFR_TEMPERATURE_PEAK",        "DD",   2,  True],
         ]
-    
+    cmd_dict = {
+        "STATUS BYTE":                 "78",
+        "STATUS WORD":                 "79",
+        "STATUS_VOUT":                 "7A",
+        "STATUS_IOUT":                 "7B",
+        "STATUS_INPUT":                "7C",
+        "STATUS_TEMPERATURE":          "7D",
+        "STATUS_CML":                  "7E",
+        "READ_VIN":                    "88",
+        "READ_VOUT":                   "8B",
+        "READ_IOUT":                   "8C",
+        "READ_TEMPERATURE":            "8D",
+        "READ_POUT":                   "96",
+        "PMBUS_REVISION":              "98",
+        "MFR_ID":                      "99",
+        "MFR_MODEL":                   "9A",
+        "MFR_REVISION":                "9B",
+        "IC_DEVICE_ID":                "AD",
+        "IC_DEVICE_REV":               "AE",
+        "MFR_I2C_ADDRESS":             "D6",
+        "MFR_VOUT_PEAK":               "DB",
+        "MFR_IOUT_PEAK":               "DC",
+        "MFR_TEMPERATURE_PEAK":        "DD"
+    }
+    # Dictionary mapping input commands (from the command line) to the handler function
     valid_cmds = {
         "vout": get_vout,
         "status_vout": get_vout_status,
         "vin": get_vin,
-        "status_vin": get_vin_status,
         "iout": get_iout,
         "status_iout": get_iout_status,
         "get_status": get_status,   # one of the args will denote status byte vs word
@@ -208,16 +303,18 @@ class voltageRegulator(device):
         # IC_DEVICE_ID?
         "watch": watch_regs,    # arguments for "watch vin/vout/iout/pout", or just spits all them out
         "raw": raw_cmd     # function that sends a hex value to the bus
+        "raw_cmd": raw_cmd
     }
     
+    ###################### Necessaries ########################
     def __init__(self, parent_bus, address, name, partnum):
         super(voltageRegulator, self).__init__(parent_bus, address, name, partnum)
-
     def __str__(self):
         pass        # this sucker is gonna be hefty
     def __repr__(self):
         pass        # copy __str__
     
+    ##################### Useful Functions #####################
     def printAllCommands(self, print_size=False):
         for row in self.cmd:            
             if print_size:
@@ -234,7 +331,7 @@ class voltageRegulator(device):
                 outstr = "0x%s: %s" % (row[1], row[0])
             print outstr
     
-    def printCommands(self, print_size=False)
+    def printCommands(self, print_size=False):
         for row in self.cmd:
             if row[3]:
                 if print_size:
@@ -251,10 +348,128 @@ class voltageRegulator(device):
                     outstr = "0x%s: %s" % (row[1], row[0])
                 print outstr
 
-
+    ##################### Cmd Handlers ############################
     def handleCommand(self, args):
-        pass
-        # check if in valid_cmds, then check if it's in cmd[i][0],
+        try:
+            valid_cmds[args[0]](args[1:])
+            return
+        except:
+            print args[0] + ": invalid command"
+        try:
+            if not raw_cmd(args[1:]):
+                print args[0] + ": invalid command"
+        except:
+            print args[0] + ": invalid command"
+
+
+     ######## args[0] will ALWAYS be the smw from here onward #########
+    def get_vout(self, args):
+        if self.address[0] == "1":
+            # TODO: is there an actual formula for this...? This is really hacky
+            self.address[0] == "4"
+        smw = args[0]
+        out = smw.callCmd("i2cget -y %s 0x%s 0x%s w" % (self.parent_bus, self.address, "8B"))
+        out_num = lin11_to_dec(out)
+        print "%d V" % (out_num)
+    def get_vout_status(self, args):
+        if self.address[0] == "1":
+            # TODO: is there an actual formula for this...? This is really hacky
+            self.address[0] == "4"
+        smw = args[0]
+        out = smw.callCmd("i2cget -y %s 0x%s 0x%s" % (self.parent_bus, self.address, "7A"))
+        print out
+    def get_vin(self, args):
+        if self.address[0] == "1":
+            # TODO: is there an actual formula for this...? This is really hacky
+            self.address[0] == "4"
+        smw = args[0]
+        out = smw.callCmd("i2cget -y %s 0x%s 0x%s w" % (self.parent_bus, self.address, "88"))
+        out_num = lin11_to_dec(out)
+        print "%d V" % (out_num)
+    def get_iout(self, args):
+        if self.address[0] == "1":
+            # TODO: is there an actual formula for this...? This is really hacky
+            self.address[0] == "4"
+        smw = args[0]
+        out = smw.callCmd("i2cget -y %s 0x%s 0x%s w" % (self.parent_bus, self.address, "8C"))
+        out_num = lin11_to_dec(out)
+        print "%d A" % (out_num)
+    def get_iout_status(self, args):
+        if self.address[0] == "1":
+            # TODO: is there an actual formula for this...? This is really hacky
+            self.address[0] == "4"
+        smw = args[0]
+        out = smw.callCmd("i2cget -y %s 0x%s 0x%s" % (self.parent_bus, self.address, "7B"))
+        print out
+    def get_status(self, args):
+        if self.address[0] == "1":
+            # TODO: is there an actual formula for this...? This is really hacky
+            self.address[0] == "4"
+        smw = args[0]
+        out = smw.callCmd("i2cget -y %s 0x%s 0x%s w" % (self.parent_bus, self.address, "79"))
+        print out
+    def get_temp(self, args):
+        if self.address[0] == "1":
+            # TODO: is there an actual formula for this...? This is really hacky
+            self.address[0] == "4"
+        smw = args[0]
+        out = smw.callCmd("i2cget -y %s 0x%s 0x%s w" % (self.parent_bus, self.address, "8C"))
+        out_num = lin11_to_dec(out)
+        print "%d C" % (out_num)
+    def get_temp_status(self, args):
+        if self.address[0] == "1":
+            # TODO: is there an actual formula for this...? This is really hacky
+            self.address[0] == "4"
+        smw = args[0]
+        out = smw.callCmd("i2cget -y %s 0x%s 0x%s" % (self.parent_bus, self.address, "7D"))
+        print out
+    def get_cml_status(self, args):
+        if self.address[0] == "1":
+            # TODO: is there an actual formula for this...? This is really hacky
+            self.address[0] == "4"
+        smw = args[0]
+        out = smw.callCmd("i2cget -y %s 0x%s 0x%s" % (self.parent_bus, self.address, "7E"))
+        print out
+    def get_power(self, args):
+        if self.address[0] == "1":
+            # TODO: is there an actual formula for this...? This is really hacky
+            self.address[0] == "4"
+        smw = args[0]
+        out = smw.callCmd("i2cget -y %s 0x%s 0x%s w" % (self.parent_bus, self.address, "96"))
+        out_num = lin11_to_dec(out)
+        print "%d W" % (out_num)
+    def get_id(self, args):
+        if self.address[0] == "1":
+            # TODO: is there an actual formula for this...? This is really hacky
+            self.address[0] == "4"
+        smw = args[0]
+        # TODO: how do we get a block?
+        out = smw.callCmd("i2cget -y %s 0x%s 0x%s k" % (self.parent_bus, self.address, "AD"))
+        print out
+    def watch_regs(self, args):
+        if self.address[0] == "1":
+            # TODO: is there an actual formula for this...? This is really hacky
+            self.address[0] == "4"
+        smw = args[0]
+        # TODO: How can we update the same thing in the command line?
+    def raw_cmd(self, args):
+        if self.address[0] == "1":
+            # TODO: is there an actual formula for this...? This is really hacky
+            self.address[0] == "4"
+        smw = args[0]
+        command = args[1]
+        for row in self.cmd:
+            if command.upper() == row[0]:
+                # need to issue the command and see what comes of it
+                out = smw.callCmd("i2cget -y %s 0x%s 0x%s k" % (self.parent_bus, self.address, row[1]))
+                print out
+                return True
+            elif command.upper() == row[1]:
+                out = smw.callCmd("i2cget -y %s 0x%s 0x%s k" % (self.parent_bus, self.address, row[1]))
+                print out
+                return True
+        return False
+        
 
 
 
