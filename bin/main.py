@@ -13,7 +13,7 @@ print ""
 ################## global usage variables ####################
 bus_num = "-1"
 dev_num = "00"
-bus_obj = csvlib.bus(0,"empty","empty")
+bus_obj = csvlib.bus("0","empty")
 csvfilename = "Device List.csv"
 exh_bus_list = helper.csv_to_bus_list(csvfilename)
 
@@ -39,7 +39,7 @@ def board_level(argument, smw):
 
 	if args[0] == "get_board":
 		pass
-
+	
 	elif args[0] == "goto_bus":
 		try:
 			bus_num = args[1]
@@ -131,7 +131,7 @@ def bus_level(argument, smw):
 	global bus_obj
 	
 	########## check the bus object ###########
-	if bus_num == bus_obj.getNum():
+	if bus_num != bus_obj.getNum():
 		bus_obj = helper.create_bus(smw, bus_num, exh_bus_list)
 		# why is this shit necessary...?
 
@@ -150,6 +150,22 @@ def bus_level(argument, smw):
 		except:
 			print "usage: get_device <hexaddr>"
 		helper.print_device(smw, bus_num, address)
+
+	elif args[0] == "goto_device":
+		try:
+			address = args[1]
+		except:
+			print "usage goto_device <hexaddr>"
+			return "bus"
+		#TODO: figure out what command will help us check if it's present
+		out = smw.callCmd("/usr/sbin/i2cget -y %s 0x%s 0x00" % (bus_num, dev_num))
+		if out == "somestring":
+			print "device not found on bus"
+			return "bus"
+		else:
+			dev_num = address
+			return "device"
+
 	
 	elif args[0] == "disp_types":
 		pass
@@ -189,23 +205,26 @@ def device_level(argument, smw):
 	args = argument.split()
 	global bus_num
 	global dev_num
+	global bus_obj
+	dev_obj = bus_obj.getDevice(dev_num)
 
-	if args[0] == "printregs":
-		pass
-		# now we need to actually figure out how the FUCK
-		#  we're going to organize this
+	if args[0] == "printregs" or args[0] == "print_regs":
+		dev_obj.print_regs(smw)
 	
-	elif args[0] == "watchregs":
-		pass
+	elif args[0] == "watchregs" or args[0] == "watch_regs":
+		dev_obj.watch_regs(smw)
 	
 	elif args[0] == "get":
-		pass
+		# TODO: make sure every bus/device object has the relevant info
+		#  that's in the CSV. User shouldn't ever have to see the CSV.
+		print dev_obj.getName()
 	
 	elif args[0] == "exit":
 		pass
 	
 	elif args[0] == "return":
-		pass
+		dev_num = "00"
+		return "bus"
 	
 	elif args[0] == "get_ps":
 		pass
@@ -222,11 +241,14 @@ def device_level(argument, smw):
 		pass
 	
 	else:
-		passing_args = [args[0], smw]
+		dev_args = [args[0], smw]
 		for i in args[1:]:
-			passing_args.append(i)
-		#TODO: currentdevice.handleCommand(passing_args)
-		print args[0] + ": invalid command"
+			dev_args.append(i)
+			
+		if dev_obj.handleCommand(dev_args):
+			return "device"
+		else:
+			print args[0] + ": invalid command"
 
 	return "device"
 

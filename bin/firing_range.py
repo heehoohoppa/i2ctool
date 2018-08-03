@@ -1,20 +1,8 @@
+import time
 
-def uzi(bullet):
-    print "Uzi %s %s" % (bullet[0], bullet[1])
-def ak47(bullet):
-    print "Ak %s" % (bullet)
-def water(bullet, clip):
-    print "Water %s %s" % (bullet, clip)
-
-my_dict = {
-    "one": "fun",
-    "two": uzi,
-    "three": ak47,
-    "four": water
-}
-
-args = ["bang"]
-args1 = ["bing", "bong"]
-
-my_dict["three"](args1, args)
-
+try:
+    while True:
+        print "I will not swear in class"
+        time.sleep(0.5)
+except:
+    print "Broke out of the loop"

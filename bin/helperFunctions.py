@@ -80,11 +80,10 @@ def create_bus(smw, bus_num, exh_bus_list):
 	index = find_index(bus_num, exh_bus_list)
 	if index != -1:
 		bus_name = exh_bus_list[index].getName()
-		path = exh_bus_list[index].getPath()
 	else:
 		print "invalid bus number"
 		return
-	out_bus = csvlib.bus(bus_num, bus_name, path)
+	out_bus = csvlib.bus(bus_num, bus_name)
 
 	# Iterate and add the devices 
 	text_holder = smw.callCmd("/usr/sbin/i2cdetect -y " + bus_num)
@@ -155,7 +154,7 @@ def csv_to_bus_list(filename):
         iterable.next()
         for row in iterable:
             if(row[0] != current_bus):
-                bus_list.append(csvlib.bus(row[0], row[1], row[5]))
+                bus_list.append(csvlib.bus(row[0], row[1]))
                 bus_list[len(bus_list)-1].addDevice(row[2], row[3], row[4])
                 current_bus = row[0]
             else:
