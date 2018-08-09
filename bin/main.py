@@ -27,7 +27,7 @@ while smw.checkCname() == 0:
 	if out == "exit":
 		exit()
 	smw = client.SMWClient(out)
-	
+
 
 ##############################################################
 ####### Functions to handle the command line interface #######
@@ -244,7 +244,7 @@ def device_level(argument, smw):
 		dev_args = [args[0], smw]
 		for i in args[1:]:
 			dev_args.append(i)
-			
+
 		if dev_obj.handleCommand(dev_args):
 			return "device"
 		else:
@@ -265,7 +265,7 @@ while tracker != "exit":
 		input_string = raw_input("bus" + bus_num + "> ")
 		tracker = bus_level(input_string, smw)
 	elif tracker == "device":
-		input_string = raw_input(["dev" + bus_num + "-0x" + str(dev_num) + "> "])
+		input_string = raw_input(bus_num + "-0x" + str(dev_num) + "> ")
 		tracker = device_level(input_string, smw)
 
 

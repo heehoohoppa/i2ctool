@@ -74,6 +74,7 @@ class device(object):
         self.name = name
         self.parttype = parttype
         self.isPresent = False
+        self.path = "/sys/bus/i2c/devices/%s-00%s" % (parent_bus, address)
 
     def __str__(self):
         if self.isPresent:
@@ -103,6 +104,7 @@ class device(object):
 
 ######################################################################
 class bus(object):
+    top_path = "/sys/bus/i2c/devices/"
     ######################## Necessaries #####################
     def __init__(self, bus_number, bus_name):
         # Note everything is always in strings, not ints
@@ -228,11 +230,13 @@ class voltageRegulator(device):
             ["STATUS_INPUT",                "7C",   1,  True],
             ["STATUS_TEMPERATURE",          "7D",   1,  True],
             ["STATUS_CML",                  "7E",   1,  True],
+            ["READ_EIN",                    "86",   6,  False],
             ["READ_VIN",                    "88",   2,  True],
             ["READ_VOUT",                   "8B",   2,  True],
             ["READ_IOUT",                   "8C",   2,  True],
             ["READ_TEMPERATURE",            "8D",   2,  True],
             ["READ_POUT",                   "96",   2,  True],
+            ["READ_PIN",                    "97",   2,  False],
             ["PMBUS_REVISION",              "98",   1,  True],
             ["MFR_ID",                      "99",   4,  True],
             ["MFR_MODEL",                   "9A",   4,  True],
@@ -373,7 +377,36 @@ class voltageRegulator(device):
 
     ######################### Supported Commands ##############################
         ######### args[0] will ALWAYS be the smw from here onward #########
-    # TODO: fix the fact that we just changed all of these to return rather than print
+
+    def get_val(self, smw, command):
+        if len(command) <= 2:
+            # we're dealing with a hex value
+            pass
+        else:
+            # check if it's a valid command:
+            found = False
+            for row in self.cmd:
+                if command.upper() == row[0]:
+                    found = True
+                    break
+            if not found:
+                print "command not found (1)"
+                return
+            # TODO: make sure this doesn't hang for forever
+            out = smw.callCmd("cat `find %s -name %s`" % (self.path, command.lower()))
+            arr = []
+            for line in out:
+                try:
+                    arr.append(int(line, 16))
+                except:
+                    continue
+            if len(arr) == 0:
+                print "command not found (2)"
+                return
+            
+
+
+
     def get_vout(self, args):
         if self.address[0] == "1":
             # TODO: is there an actual formula for this...? This is really hacky
@@ -386,57 +419,67 @@ class voltageRegulator(device):
         if self.address[0] == "1":
             self.address[0] == "4"
         smw = args[0]
-        out = smw.callCmd("/usr/sbin/i2cget -y %s 0x%s 0x%s" % (self.parent_bus, self.address, "7A"))
+        out = smw.callCmd("cat %s/0x79-7a/status_word" % (self.path))
+        #TODO: actually deal with the status word
+        # crazy idea: just search each time for the status_vout, read_vout, etc within the self/path
         return out
     def get_vin(self, args):
         if self.address[0] == "1":
             self.address[0] == "4"
         smw = args[0]
-        out = smw.callCmd("/usr/sbin/i2cget -y %s 0x%s 0x%s w" % (self.parent_bus, self.address, "88"))
+        out = smw.callCmd("cat %s/0x88-89/read_vin" % (self.path))
+        # out = smw.callCmd("/usr/sbin/i2cget -y %s 0x%s 0x%s w" % (self.parent_bus, self.address, "88"))
         out_num = lin11_to_dec(out)
         return "%d V" % (out_num)
     def get_iout(self, args):
         if self.address[0] == "1":
             self.address[0] == "4"
         smw = args[0]
-        out = smw.callCmd("/usr/sbin/i2cget -y %s 0x%s 0x%s w" % (self.parent_bus, self.address, "8C"))
+        out = smw.callCmd("cat %s/0x8c-8d/read_iout" % (self.path))
+        # out = smw.callCmd("/usr/sbin/i2cget -y %s 0x%s 0x%s w" % (self.parent_bus, self.address, "8C"))
         out_num = lin11_to_dec(out)
         return "%d A" % (out_num)
     def get_iout_status(self, args):
         if self.address[0] == "1":
             self.address[0] == "4"
         smw = args[0]
+        # out = smw.callCmd("cat %s/0x8c-8d/read_iout" % (self.path))
         out = smw.callCmd("/usr/sbin/i2cget -y %s 0x%s 0x%s" % (self.parent_bus, self.address, "7B"))
         return out
     def get_status(self, args):
         if self.address[0] == "1":
             self.address[0] == "4"
         smw = args[0]
-        out = smw.callCmd("/usr/sbin/i2cget -y %s 0x%s 0x%s w" % (self.parent_bus, self.address, "79"))
+        out = smw.callCmd("cat %s/0x79-7a/status_word" % (self.path))
+        # out = smw.callCmd("/usr/sbin/i2cget -y %s 0x%s 0x%s w" % (self.parent_bus, self.address, "79"))
         return out
     def get_temp(self, args):
         if self.address[0] == "1":
             self.address[0] == "4"
         smw = args[0]
-        out = smw.callCmd("/usr/sbin/i2cget -y %s 0x%s 0x%s w" % (self.parent_bus, self.address, "8C"))
+        out = smw.callCmd("cat %s/0x8d-8e/read_temperature_1" % (self.path))
+        # out = smw.callCmd("/usr/sbin/i2cget -y %s 0x%s 0x%s w" % (self.parent_bus, self.address, "8C"))
         out_num = lin11_to_dec(out)
         return "%d C" % (out_num)
     def get_temp_status(self, args):
         if self.address[0] == "1":
             self.address[0] == "4"
         smw = args[0]
-        out = smw.callCmd("/usr/sbin/i2cget -y %s 0x%s 0x%s" % (self.parent_bus, self.address, "7D"))
+        out = smw.callCmd("cat %s/0x7d/status_temperature" % (self.path))
+        # out = smw.callCmd("/usr/sbin/i2cget -y %s 0x%s 0x%s" % (self.parent_bus, self.address, "7D"))
         return out
     def get_cml_status(self, args):
         if self.address[0] == "1":
             self.address[0] == "4"
         smw = args[0]
-        out = smw.callCmd("/usr/sbin/i2cget -y %s 0x%s 0x%s" % (self.parent_bus, self.address, "7E"))
+        out = smw.callCmd("cat %s/0x7e/status_cml" % (self.path))
+        # out = smw.callCmd("/usr/sbin/i2cget -y %s 0x%s 0x%s" % (self.parent_bus, self.address, "7E"))
         return out
     def get_power(self, args):
         if self.address[0] == "1":
             self.address[0] == "4"
         smw = args[0]
+        # out = smw.callCmd("cat %s/0x7e/status_cml" % (self.path))        
         out = smw.callCmd("/usr/sbin/i2cget -y %s 0x%s 0x%s w" % (self.parent_bus, self.address, "96"))
         out_num = lin11_to_dec(out)
         return "%d W" % (out_num)
@@ -496,16 +539,6 @@ class voltageRegulator(device):
                 print out
                 return True
         return False
-
-    def test_out(self, args):
-        print "Vin: ",
-        self.get_vin(args)
-        print "Vout: ",
-        self.get_vout(args)
-        print "Iout: ",
-        self.get_iout(args)
-        print "Temp: ",
-        self.get_temp(args)
         
 
     valid_cmds = {
@@ -543,3 +576,12 @@ class voltageRegulator(device):
         # except:
         #     print args[0] + ": invalid command"
 
+
+########################################################################
+class seep(device):
+    def __init__(self, parent_bus, address, name, parttype):
+        super(seep, self).__init__(parent_bus, address, name, parttype)
+    def __str__(self):
+        super(seep, self).__str__()        # this sucker is gonna be hefty
+    def __repr__(self):
+        super(seep, self).__repr__()         # copy __str__

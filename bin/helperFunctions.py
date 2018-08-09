@@ -128,21 +128,59 @@ def print_device(smw, bus, address):
 
 ##################################################################
 ######################## Help Printers ###########################
+def global_help():
+	print """
+			Global Commands
+help
+	- display available commands
+exit
+	- exit the program
+return
+	- move "up" in the heirarchy (e.g. move from bus to board, or device to bus)
+set_cname
+	- change the system the program is working on
+cmd
+	- pass a raw command to the BC (as if you were xtlogin'd)
+"""
+
 def board_help():
-	print """get_board
+	global_help()
+	print """
+			Board-Level Commands
+get_board
 	- prints the type of board the user has logged onto
-bus_list
-	- lists all of the buses
+bus_list || buses
+	- lists all of the present buses
 goto_bus <busnum>
 	- move to the bus level
-
+walk_bus <busnum>
+	- list the devices present on the bus
 """
 
 def bus_help():
-	print "gonna need a lot of very pretty print statements here"
+	global_help()
+	print """
+			Bus-Level Commands
+walk_bus || walk
+	- list the devices present on the current bus
+get_device <hexaddr>
+	- return basic information on the device at <hexaddr>
+goto_device <hexaddr>
+	- move to the device level
 
+"""
 def dev_help():
-	print "gonna need a lot of very pretty print statements here"
+	global_help()
+	print """
+			Device-Level Commands
+print_regs
+	- read essential registers from the device
+print_regs -a
+	- output all raw register values
+watch_regs
+	- set up a continuous stream to view register values
+
+"""
 
 #################################################################
 ######################## Useful Functions #######################
@@ -150,15 +188,15 @@ def csv_to_bus_list(filename):
     bus_list = []
     current_bus = '-1'
     with open(filename, 'rb') as csvfile:       # 'rb'?
-        iterable = reader(csvfile)
-        iterable.next()
-        for row in iterable:
-            if(row[0] != current_bus):
-                bus_list.append(csvlib.bus(row[0], row[1]))
-                bus_list[len(bus_list)-1].addDevice(row[2], row[3], row[4])
-                current_bus = row[0]
-            else:
-                bus_list[len(bus_list)-1].addDevice(row[2], row[3], row[4])
+		iterable = reader(csvfile)
+		iterable.next()
+		for row in iterable:
+			if(row[0] != current_bus):
+				bus_list.append(csvlib.bus(row[0], row[1]))
+				bus_list[len(bus_list)-1].addDevice(row[2], row[3], row[4])
+				current_bus = row[0]
+			else:
+				bus_list[len(bus_list)-1].addDevice(row[2], row[3], row[4])
     return bus_list
 
 
@@ -180,5 +218,4 @@ def find_index(bus_num, bus_list):
 def check_bus(smw):
     pass
 
-def check_device(smw):
-    pass
+
