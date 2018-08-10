@@ -14,7 +14,7 @@ print ""
 bus_num = "-1"
 dev_num = "00"
 bus_obj = csvlib.bus("0","empty")
-dev_obj = csvlib.device("0", "0", "empty", "empty")
+dev_obj = csvlib.device("0", "0", "empty", "empty", "none")
 csvfilename = "Device List.csv"
 exh_bus_list = helper.csv_to_bus_list(csvfilename)
 
