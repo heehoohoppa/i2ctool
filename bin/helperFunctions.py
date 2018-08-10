@@ -96,8 +96,8 @@ def create_bus(smw, bus_num, exh_bus_list):
 			addresses.append(arr[i])
 	ref_addrs = exh_bus_list[index].getAddresses()
 	# Okay we have the addresses, now we just need to populate it and get the corresponding properties
-	for a in ref_addrs:
-		pass
+	# for a in ref_addrs:
+	# 	pass
 	return out_bus
 
 
@@ -124,6 +124,39 @@ def print_device(smw, bus, address):
 	pass # First check if the device 
 
 
+
+#################################################################
+######################## Useful Functions #######################
+def csv_to_bus_list(filename):
+    bus_list = []
+    current_bus = '-1'
+    with open(filename, 'rb') as csvfile:       # 'rb'?
+		iterable = reader(csvfile)
+		iterable.next()
+		for row in iterable:
+			if(row[0] != current_bus):
+				bus_list.append(csvlib.bus(row[0], row[1]))
+				bus_list[len(bus_list)-1].addDevice(row[2], row[3], row[4])
+				current_bus = row[0]
+			else:
+				bus_list[len(bus_list)-1].addDevice(row[2], row[3], row[4])
+    return bus_list
+
+
+def find_index(bus_num, bus_list):
+    # Gonna binary search this bitch
+    bus_num = int(bus_num)
+    L = 0
+    R = len(bus_list) - 1
+    while L < R:
+        tracker = int((L+R)/2)
+        if int(bus_list[tracker].getNum()) < bus_num:
+            L = tracker + 1
+        elif int(bus_list[tracker].getNum()) > bus_num:
+            R = tracker - 1
+        else:
+            return tracker
+    return -1
 
 
 ##################################################################
@@ -161,13 +194,14 @@ def bus_help():
 	global_help()
 	print """
 			Bus-Level Commands
-walk_bus || walk
-	- list the devices present on the current bus
+walk_bus || walk [-p/-m]
+	- list the devices, present or not present, on the bus.
+	-  with the -p flag, will only list present devices
+	-  with the -m flag, will only list missing devices
 get_device <hexaddr>
 	- return basic information on the device at <hexaddr>
 goto_device <hexaddr>
 	- move to the device level
-
 """
 def dev_help():
 	global_help()
@@ -180,42 +214,24 @@ print_regs -a
 watch_regs
 	- set up a continuous stream to view register values
 
+		Commands to Voltage Regulators
+	(note: supported commands depend on chip manufacturer)
+get_vout
+get_vout_status
+get_vin
+get_iout
+get_iout_status
+get_temperature
+get_temperature_status
+get_power
+get_status
+	- read the device status word
+print_cmds
+	- prints a list of hex values and register pairs
+raw_cmd <hexval>
+	- send a raw hex value and display the output
+
 """
 
-#################################################################
-######################## Useful Functions #######################
-def csv_to_bus_list(filename):
-    bus_list = []
-    current_bus = '-1'
-    with open(filename, 'rb') as csvfile:       # 'rb'?
-		iterable = reader(csvfile)
-		iterable.next()
-		for row in iterable:
-			if(row[0] != current_bus):
-				bus_list.append(csvlib.bus(row[0], row[1]))
-				bus_list[len(bus_list)-1].addDevice(row[2], row[3], row[4])
-				current_bus = row[0]
-			else:
-				bus_list[len(bus_list)-1].addDevice(row[2], row[3], row[4])
-    return bus_list
-
-
-def find_index(bus_num, bus_list):
-    # Gonna binary search this bitch
-    bus_num = int(bus_num)
-    L = 0
-    R = len(bus_list) - 1
-    while L < R:
-        tracker = int((L+R)/2)
-        if int(bus_list[tracker].getNum()) < bus_num:
-            L = tracker + 1
-        elif int(bus_list[tracker].getNum()) > bus_num:
-            R = tracker - 1
-        else:
-            return tracker
-    return -1
-
-def check_bus(smw):
-    pass
 
 

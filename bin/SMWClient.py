@@ -18,6 +18,7 @@ class SMWClient(object):
         p = subprocess.Popen(cmd, shell=True, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, close_fds=True)
         out = p.stdout.read()
         
+        # rsh -l root c0-0c0s2 cat /sys/bus/i2c/devices/131-0044/0x88-89/read_vin
         # call(["rcp", "-r", 
         #     "root@" + self.cname + ":/tmp/i2ctemp.txt",
         #     "."])

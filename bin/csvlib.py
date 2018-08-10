@@ -1,61 +1,91 @@
 from copy import deepcopy
 from time import sleep
 
+# Function to convert arg(hex) from linear11 format to a readable base10 number
+# input: 16-bit hex
+# output: float
 def lin11_to_dec(arg):
     # input will be 16-bit hex
     # output x = y * 2**n
+    if arg[0:2] == "0x":
+        arg = arg[2:]
+    counter = 0
+    try:
+        for i in arg:
+            int(i, 16)
+            counter += 1
+    except:
+        pass
+    arg = arg[0:counter]
     num = int(arg, 16)
     mask = 0b0000011111111111
     lower = num & mask
-    n = 0
-    y = 0
-    print str(bin(lower))
+    n = 0.0
+    y = 0.0
+    # print str(bin(lower))
     if len(str(bin(lower))) == 13:
         # perform two's compliment operator, then take the negative
         lower = lower ^ mask
         lower += 1
         y = 0 - lower
     elif len(str(bin(lower))) > 13:
-        print "error: greater than 11 bits for lower"
+        # error: greater than 11 bits for lower (linear11)
+        return 999
     else:
         y = lower
-
     mask = 0b1111100000000000
     upper = num & mask
     upper = upper >> 11
+    mask = 0b11111
     if len(str(bin(upper))) == 7:
         # perform two's compliment operator, then take the negative
         upper = upper ^ mask
         upper += 1
         n = 0 - upper
     elif len(str(bin(upper))) > 7:
-        print "error: greater than 5 bits for upper"
+        # error: greater than 5 bits for upper (linear11)
+        return 999
     else:
         n = upper
-
     return (y * 2**n)
 
+# Function to convert arg(hex) from linear16 format to a readable base10 number
+# input: 16-bit hex
+# output: float
 def lin16_to_dec(arg):
     # input will be 16-bit hex
     # output x = y * 2**n
+    if arg[0:2] == "0x":
+        arg = arg[2:]
+    counter = 1
+    try:
+        for i in arg:
+            int(i, 16)
+            counter += 1
+    except:
+        pass
+    arg = arg[0:counter]
     num = int(arg, 16)
     mask = 0b0000011111111111
 
     lower = num & mask
-    y = 0
+    y = 0.0
     if len(str(bin(lower))) == 13:
         # perform two's compliment operator, then take the negative
         lower = lower ^ mask
         lower += 1
         y = 0 - lower
     elif len(str(bin(lower))) > 13:
-        print "error: greater than 11 bits for lower"
+        # error: greater than 11 bits for lower (linear16)
+        return 999
     else:
         y = lower
-    n = -8      # default value for linear16
-        
+    n = -8.0      # default value for linear16
     return (y * 2**n)
 
+# Function to print all number formats of a hex input
+# input: hexadecimal format, if not 16-bits then the lin11/16 will be incorrect
+# output: none (prints)
 def disp_all_number_formats(arg):
     # takes a in a hexadecimal string, method prints all variants of the number
     integer = int(arg, 16)
@@ -66,15 +96,21 @@ def disp_all_number_formats(arg):
     print "       %-12s %-12d %-12d %-12d %s" % (arg, integer, lin11, lin16, binary)
 
 ######################################################################
+######################################################################
+# Class to represent a basic device instance
 class device(object):
     ####################### Necessaries ####################
-    def __init__(self, parent_bus, address, name, parttype):
+    def __init__(self, parent_bus, address, name, partnum, parttype):
         self.parent_bus = parent_bus
         self.address = address
         self.name = name
-        self.parttype = parttype
+        self.partnum = partnum
         self.isPresent = False
         self.path = "/sys/bus/i2c/devices/%s-00%s" % (parent_bus, address)
+        if parttype == "vr":
+            self.parttype = "vr" # = voltage regulator
+        else:
+            parttype = "none"
 
     def __str__(self):
         if self.isPresent:
@@ -98,82 +134,14 @@ class device(object):
         return self.address
 
     ###################### Useful Methods #######################
-    def printProperties(self, smw):
-        pass #folder = smw.callCmd("ls " + )
+    def printInfo(self):
+        print "device:    %s" % (self.name)
+        print "address:   0x%s" % (self.address)
+        print "part#:     %s" % (self.partnum)
 
-
-######################################################################
-class bus(object):
-    top_path = "/sys/bus/i2c/devices/"
-    ######################## Necessaries #####################
-    def __init__(self, bus_number, bus_name):
-        # Note everything is always in strings, not ints
-        self.bus_number = bus_number
-        self.bus_name = bus_name
-        self.devices = []
-    
-    def __str__(self):
-        return self.bus_number + ": " + self.bus_name
-    def __repr__(self):
-        return self.bus_number + ": " + self.bus_name
-
-    ###################### Device Printers ##########################
-    def printDevices(self):
-        print self.bus_number + ": " + self.bus_name
-        for dev in self.devices:
-            print `dev`
-    def printPresentDevices(self):
-        print self.bus_number + ": " + self.bus_name
-        for dev in self.devices:
-            if dev.getIsPresent():
-                print `dev`
-    def printMissingDevices(self):
-        print self.bus_number + ": " + self.bus_name
-        for dev in self.devices:
-            if not dev.getIsPresent():
-                print `dev`
-
-    ####################### Useful Stuff ########################
-    def setDevicePresences(self, addrs):
-        for d in self.devices:
-            if d.getAddr() in addrs:
-                d.setIsPresent(True)
-            else:
-                d.setIsPresent(False)
-
-    ###################### Getters/Setters ######################
-    def addDevice(self, address, name, parttype):
-        # only used as part of creating the class. Shouldn't be touched too much.
-        self.devices.append(device(self.bus_number, address, name, parttype))
-    
-    def getDevice(self, addr):
-        for dev in self.devices:
-            if dev.getAddr() == str(addr):
-                return dev
-    
-    def getMissingDevices(self, addrs):
-        out = []
-        found = False
-        for a in addrs:
-            for d in self.devices:
-                if d.getAddr() == a:
-                    found = True
-                    break
-            if not found:
-                out.append(a)
-        return out
-
-    def getNum(self):
-        return self.bus_number
-    
-    def getName(self):
-        return self.bus_name
-
-    def getAddresses(self):
-        out = []
-        for d in self.devices:
-            out.append(d.getAddr())
-        return out
+    def print_regs(self, smw):
+        out = smw.callCmd("/usr/sbin/i2cdump -f -y %d 0x%d" % (self.parent_bus, self.address))
+        print out
 
 
 ########################################################################
@@ -279,8 +247,8 @@ class voltageRegulator(device):
     # Dictionary mapping input commands (from the command line) to the handler function
     
     ###################### Necessaries ########################
-    def __init__(self, parent_bus, address, name, parttype):
-        super(voltageRegulator, self).__init__(parent_bus, address, name, parttype)
+    def __init__(self, parent_bus, address, name, partnum, parttype):
+        super(voltageRegulator, self).__init__(parent_bus, address, name, partnum, parttype)
     def __str__(self):
         super(voltageRegulator, self).__str__()        # this sucker is gonna be hefty
     def __repr__(self):
@@ -403,8 +371,6 @@ class voltageRegulator(device):
             if len(arr) == 0:
                 print "command not found (2)"
                 return
-            
-
 
 
     def get_vout(self, args):
@@ -412,14 +378,15 @@ class voltageRegulator(device):
             # TODO: is there an actual formula for this...? This is really hacky
             self.address[0] == "4"
         smw = args[0]
-        out = smw.callCmd("/usr/sbin/i2cget -y %s 0x%s 0x%s w" % (self.parent_bus, self.address, "8B"))
+        out = smw.callCmd("/usr/sbin/i2cget -f -y %s 0x%s 0x%s w" % (self.parent_bus, self.address, "8B"))
         out_num = lin16_to_dec(out)
-        return "%d V" % (out_num)
+        return "%.3f V" % (out_num)
     def get_vout_status(self, args):
         if self.address[0] == "1":
             self.address[0] == "4"
         smw = args[0]
-        out = smw.callCmd("cat %s/0x79-7a/status_word" % (self.path))
+        # out = smw.callCmd("cat %s/0x79-7a/status_word" % (self.path))
+        out = smw.callCmd("/usr/sbin/i2cget -f -y %s 0x%s 0x%s w" % (self.parent_bus, self.address, "7A"))
         #TODO: actually deal with the status word
         # crazy idea: just search each time for the status_vout, read_vout, etc within the self/path
         return out
@@ -427,81 +394,81 @@ class voltageRegulator(device):
         if self.address[0] == "1":
             self.address[0] == "4"
         smw = args[0]
-        out = smw.callCmd("cat %s/0x88-89/read_vin" % (self.path))
-        # out = smw.callCmd("/usr/sbin/i2cget -y %s 0x%s 0x%s w" % (self.parent_bus, self.address, "88"))
+        # out = smw.callCmd("cat %s/0x88-89/read_vin" % (self.path))
+        out = smw.callCmd("/usr/sbin/i2cget -f -y %s 0x%s 0x%s w" % (self.parent_bus, self.address, "88"))
         out_num = lin11_to_dec(out)
-        return "%d V" % (out_num)
+        return "%.3f V" % (out_num)
     def get_iout(self, args):
         if self.address[0] == "1":
             self.address[0] == "4"
         smw = args[0]
-        out = smw.callCmd("cat %s/0x8c-8d/read_iout" % (self.path))
-        # out = smw.callCmd("/usr/sbin/i2cget -y %s 0x%s 0x%s w" % (self.parent_bus, self.address, "8C"))
+        # out = smw.callCmd("cat %s/0x8c-8d/read_iout" % (self.path))
+        out = smw.callCmd("/usr/sbin/i2cget -f -y %s 0x%s 0x%s w" % (self.parent_bus, self.address, "8C"))
         out_num = lin11_to_dec(out)
-        return "%d A" % (out_num)
+        return "%.3f A" % (out_num)
     def get_iout_status(self, args):
         if self.address[0] == "1":
             self.address[0] == "4"
         smw = args[0]
         # out = smw.callCmd("cat %s/0x8c-8d/read_iout" % (self.path))
-        out = smw.callCmd("/usr/sbin/i2cget -y %s 0x%s 0x%s" % (self.parent_bus, self.address, "7B"))
+        out = smw.callCmd("/usr/sbin/i2cget -f -y %s 0x%s 0x%s" % (self.parent_bus, self.address, "7B"))
         return out
     def get_status(self, args):
         if self.address[0] == "1":
             self.address[0] == "4"
         smw = args[0]
-        out = smw.callCmd("cat %s/0x79-7a/status_word" % (self.path))
-        # out = smw.callCmd("/usr/sbin/i2cget -y %s 0x%s 0x%s w" % (self.parent_bus, self.address, "79"))
+        # out = smw.callCmd("cat %s/0x79-7a/status_word" % (self.path))
+        out = smw.callCmd("/usr/sbin/i2cget -f -y %s 0x%s 0x%s w" % (self.parent_bus, self.address, "79"))
         return out
     def get_temp(self, args):
         if self.address[0] == "1":
             self.address[0] == "4"
         smw = args[0]
-        out = smw.callCmd("cat %s/0x8d-8e/read_temperature_1" % (self.path))
-        # out = smw.callCmd("/usr/sbin/i2cget -y %s 0x%s 0x%s w" % (self.parent_bus, self.address, "8C"))
+        # out = smw.callCmd("cat %s/0x8d-8e/read_temperature_1" % (self.path))
+        out = smw.callCmd("/usr/sbin/i2cget -f -y %s 0x%s 0x%s w" % (self.parent_bus, self.address, "8D"))
         out_num = lin11_to_dec(out)
-        return "%d C" % (out_num)
+        return "%.1f C" % (out_num)
     def get_temp_status(self, args):
         if self.address[0] == "1":
             self.address[0] == "4"
         smw = args[0]
-        out = smw.callCmd("cat %s/0x7d/status_temperature" % (self.path))
-        # out = smw.callCmd("/usr/sbin/i2cget -y %s 0x%s 0x%s" % (self.parent_bus, self.address, "7D"))
+        # out = smw.callCmd("cat %s/0x7d/status_temperature" % (self.path))
+        out = smw.callCmd("/usr/sbin/i2cget -f -y %s 0x%s 0x%s" % (self.parent_bus, self.address, "7D"))
         return out
     def get_cml_status(self, args):
         if self.address[0] == "1":
             self.address[0] == "4"
         smw = args[0]
-        out = smw.callCmd("cat %s/0x7e/status_cml" % (self.path))
-        # out = smw.callCmd("/usr/sbin/i2cget -y %s 0x%s 0x%s" % (self.parent_bus, self.address, "7E"))
+        # out = smw.callCmd("cat %s/0x7e/status_cml" % (self.path))
+        out = smw.callCmd("/usr/sbin/i2cget -f -y %s 0x%s 0x%s" % (self.parent_bus, self.address, "7E"))
         return out
     def get_power(self, args):
         if self.address[0] == "1":
             self.address[0] == "4"
         smw = args[0]
         # out = smw.callCmd("cat %s/0x7e/status_cml" % (self.path))        
-        out = smw.callCmd("/usr/sbin/i2cget -y %s 0x%s 0x%s w" % (self.parent_bus, self.address, "96"))
+        out = smw.callCmd("/usr/sbin/i2cget -f -y %s 0x%s 0x%s w" % (self.parent_bus, self.address, "96"))
         out_num = lin11_to_dec(out)
-        return "%d W" % (out_num)
+        return "%.2f W" % (out_num)
     def get_id(self, args):
         if self.address[0] == "1":
             self.address[0] == "4"
         smw = args[0]
         # TODO: how do we get a block?
-        out = smw.callCmd("/usr/sbin/i2cget -y %s 0x%s 0x%s k" % (self.parent_bus, self.address, "AD"))
+        out = smw.callCmd("/usr/sbin/i2cget -f -y %s 0x%s 0x%s k" % (self.parent_bus, self.address, "AD"))
         return out
 
     #############################################################
     def print_regs(self, smw):
         # function to print the most essential info from the VR
         print "Vin: ",
-        print self.get_vin([smw])
+        print "%d" % (self.get_vin([smw]))
         print "Vout: ",
-        print self.get_vout([smw])
+        print "%d" % (self.get_vout([smw]))
         print "Iout: ",
-        print self.get_iout([smw])
+        print "%d" % (self.get_iout([smw]))
         print "Temp: ",
-        print self.get_temp([smw])
+        print "%d" % (self.get_temp([smw]))
 
 
     def watch_regs(self, smw, sample_period=0.25):
@@ -531,57 +498,132 @@ class voltageRegulator(device):
         for row in self.cmd:
             if command.upper() == row[0]:
                 # need to issue the command and see what comes of it
-                out = smw.callCmd("/usr/sbin/i2cget -y %s 0x%s 0x%s k" % (self.parent_bus, self.address, row[1]))
+                out = smw.callCmd("/usr/sbin/i2cget -f -y %s 0x%s 0x%s k" % (self.parent_bus, self.address, row[1]))
                 print out
                 return True
             elif command.upper() == row[1]:
-                out = smw.callCmd("/usr/sbin/i2cget -y %s 0x%s 0x%s k" % (self.parent_bus, self.address, row[1]))
+                out = smw.callCmd("/usr/sbin/i2cget -f -y %s 0x%s 0x%s k" % (self.parent_bus, self.address, row[1]))
                 print out
                 return True
         return False
         
 
     valid_cmds = {
-        "vout": get_vout,
-        "status_vout": get_vout_status,
-        "vin": get_vin,
-        "iout": get_iout,
-        "status_iout": get_iout_status,
+        "get_vout": get_vout,
+        "get_vout_status": get_vout_status,
+        "get_vin": get_vin,
+        "get_iout": get_iout,
+        "get_iout_status": get_iout_status,
         "get_status": get_status,   # one of the args will denote status byte vs word
         "status": get_status,
         "temp": get_temp,
-        "temperature": get_temp,
+        "get_temperature": get_temp,
         "temp_status": get_temp_status,
         "temperature_status": get_temp_status,
         "cml_status": get_cml_status,       # what the hell is this?
-        "power": get_power,
+        "get_power": get_power,
         "power_out": get_power,
         "id": get_id,       # might lump MFR_MODEL/REVISION in with this
         "dev": get_id,
-        # IC_DEVICE_ID?
-        "watch": watch_regs,    # arguments for "watch vin/vout/iout/pout", or just spits all them out
         "raw": raw_cmd,     # function that sends a hex value to the bus
         "raw_cmd": raw_cmd
     }
     ##################### Holy Grail ############################
     def handleCommand(self, args):
+        # True/False output tells main.py if the command was valid 
         try:
             print self.valid_cmds[args[0]](args[1:])
             return True
         except:
             return False
-        # try:
-        #     if not self.raw_cmd(args[1:]):
-        #         print args[0] + ": invalid command"
-        # except:
-        #     print args[0] + ": invalid command"
 
-
-########################################################################
-class seep(device):
-    def __init__(self, parent_bus, address, name, parttype):
-        super(seep, self).__init__(parent_bus, address, name, parttype)
+######################################################################
+######################################################################
+# Class to represent a single bus on the board
+class bus(object):
+    top_path = "/sys/bus/i2c/devices/"
+    ######################## Necessaries #####################
+    def __init__(self, bus_number, bus_name):
+        # Note everything is always in strings, not ints
+        self.bus_number = bus_number
+        self.bus_name = bus_name
+        self.devices = []
+    
     def __str__(self):
-        super(seep, self).__str__()        # this sucker is gonna be hefty
+        return self.bus_number + ": " + self.bus_name
     def __repr__(self):
-        super(seep, self).__repr__()         # copy __str__
+        return self.bus_number + ": " + self.bus_name
+
+    ###################### Device Printers ##########################
+    def printDevices(self):
+        print self.bus_number + ": " + self.bus_name
+        for dev in self.devices:
+            print `dev`
+    def printPresentDevices(self):
+        print self.bus_number + ": " + self.bus_name
+        for dev in self.devices:
+            if dev.getIsPresent():
+                print `dev`
+    def printMissingDevices(self):
+        print self.bus_number + ": " + self.bus_name
+        for dev in self.devices:
+            if not dev.getIsPresent():
+                print `dev`
+    def printInfo(self):
+        print "bus#:  %s" % (self.bus_number)
+        print "name:  %s" % (self.bus_name)
+
+    ####################### Useful Stuff ########################
+    def setDevicePresences(self, addrs):
+        for d in self.devices:
+            if d.getAddr() in addrs:
+                d.setIsPresent(True)
+            else:
+                d.setIsPresent(False)
+
+    ###################### Getters/Setters ######################
+    def addDevice(self, address, name, partnum, parttype):
+        # only used as part of creating the class. Shouldn't be touched too much.
+        if parttype == "vr":
+            self.devices.append(voltageRegulator(self.bus_number, address, name, partnum, parttype))
+        else:
+            self.devices.append(device(self.bus_number, address, name, partnum, parttype))
+    
+    def getDevice(self, addr):
+        for dev in self.devices:
+            if dev.getAddr() == str(addr):
+                return dev
+    
+    def getMissingDevices(self, addrs):
+        out = []
+        found = False
+        for a in addrs:
+            for d in self.devices:
+                if d.getAddr() == a:
+                    found = True
+                    break
+            if not found:
+                out.append(a)
+        return out
+
+    def getNum(self):
+        return self.bus_number
+    
+    def getName(self):
+        return self.bus_name
+
+    def getAddresses(self):
+        out = []
+        for d in self.devices:
+            out.append(d.getAddr())
+        return out
+
+
+# ########################################################################
+# class seep(device):
+#     def __init__(self, parent_bus, address, name, parttype):
+#         super(seep, self).__init__(parent_bus, address, name, parttype)
+#     def __str__(self):
+#         super(seep, self).__str__()
+#     def __repr__(self):
+#         super(seep, self).__repr__()

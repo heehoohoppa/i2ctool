@@ -14,6 +14,7 @@ print ""
 bus_num = "-1"
 dev_num = "00"
 bus_obj = csvlib.bus("0","empty")
+dev_obj = csvlib.device("0", "0", "empty", "empty")
 csvfilename = "Device List.csv"
 exh_bus_list = helper.csv_to_bus_list(csvfilename)
 
@@ -36,11 +37,9 @@ def board_level(argument, smw):
 	args = argument.split()
 	global bus_num
 	global dev_num
-
-	if args[0] == "get_board":
-		pass
+	global bus_obj
 	
-	elif args[0] == "goto_bus":
+	if args[0] == "goto_bus":
 		try:
 			bus_num = args[1]
 		except:
@@ -50,6 +49,8 @@ def board_level(argument, smw):
 		try:
 			holder = smw.callCmd("cd /sys/bus/i2c/devices/i2c-" + str(bus_num))
 			if holder == "":
+				index = helper.find_index(bus_num, exh_bus_list)
+				bus_obj = exh_bus_list[index]
 				return "bus"
 			else:
 				print "goto_bus failed (1)"
@@ -144,6 +145,10 @@ def bus_level(argument, smw):
 		except:
 			helper.walk_bus(smw, bus_num, exh_bus_list)
 	
+	if args[0] == "info":
+		index = helper.find_index(bus_num, exh_bus_list)
+		exh_bus_list[index].printInfo()
+
 	elif args[0] == "get_device":
 		try:
 			address = args[1]
@@ -158,12 +163,21 @@ def bus_level(argument, smw):
 			print "usage goto_device <hexaddr>"
 			return "bus"
 		#TODO: figure out what command will help us check if it's present
-		out = smw.callCmd("/usr/sbin/i2cget -y %s 0x%s 0x00" % (bus_num, dev_num))
-		if out == "somestring":
+		# print smw.callCmd("/usr/sbin/i2cget -y %s 0x%s 0x00" % (bus_num, address))
+		out = smw.callCmd("/usr/sbin/i2cget -y %s 0x%s 0x00" % (bus_num, address))
+		if out[0:5] == "Error":
 			print "device not found on bus"
 			return "bus"
-		else:
+		elif out[0:2] == "0x":
 			dev_num = address
+			index = helper.find_index(bus_num, exh_bus_list)
+			bus_obj = exh_bus_list[index]
+			return "device"
+		else:
+			print "???"
+			dev_num = address
+			index = helper.find_index(bus_num, exh_bus_list)
+			bus_obj = exh_bus_list[index]
 			return "device"
 
 	
@@ -194,7 +208,7 @@ def bus_level(argument, smw):
 		print smw.callCmd(args)
 	
 	elif args[0] == "help" or args[0] == "-h":
-		pass
+		helper.bus_help()
 	
 	else:
 		print args[0] + ": invalid command"
@@ -206,21 +220,25 @@ def device_level(argument, smw):
 	global bus_num
 	global dev_num
 	global bus_obj
+	global dev_obj
+	
 	dev_obj = bus_obj.getDevice(dev_num)
 
 	if args[0] == "printregs" or args[0] == "print_regs":
+		# bus_obj.printDevices()
+		# dev_obj.getAddr()
 		dev_obj.print_regs(smw)
 	
 	elif args[0] == "watchregs" or args[0] == "watch_regs":
 		dev_obj.watch_regs(smw)
 	
-	elif args[0] == "get":
+	elif args[0] == "info":
 		# TODO: make sure every bus/device object has the relevant info
 		#  that's in the CSV. User shouldn't ever have to see the CSV.
-		print dev_obj.getName()
+		dev_obj.printInfo()
 	
 	elif args[0] == "exit":
-		pass
+		return "exit"
 	
 	elif args[0] == "return":
 		dev_num = "00"
@@ -238,16 +256,18 @@ def device_level(argument, smw):
 		print smw.callCmd(args)
 	
 	elif args[0] == "help" or args[0] == "-h":
-		pass
+		helper.dev_help()
 	
 	else:
 		dev_args = [args[0], smw]
 		for i in args[1:]:
 			dev_args.append(i)
-
-		if dev_obj.handleCommand(dev_args):
-			return "device"
-		else:
+		try:
+			if dev_obj.handleCommand(dev_args):
+				return "device"
+			else:
+				print args[0] + ": invalid command"
+		except:
 			print args[0] + ": invalid command"
 
 	return "device"
