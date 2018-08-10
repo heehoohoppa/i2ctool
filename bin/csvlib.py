@@ -98,6 +98,8 @@ def disp_all_number_formats(arg):
 ######################################################################
 ######################################################################
 # Class to represent a basic device instance
+# TODO: lots more functionality needs to be added to device. voltageRegulator looks pretty good, and
+#  some of those functions need to be generalized to the device class.
 class device(object):
     ####################### Necessaries ####################
     def __init__(self, parent_bus, address, name, partnum, parttype):
@@ -112,16 +114,17 @@ class device(object):
         else:
             parttype = "none"
 
+    # These methods are good for the sake of "print `device_obj`"
     def __str__(self):
         if self.isPresent:
-            return "    0x" + self.address + ":(+) " + self.name 
+            return "    0x%s:(+) %s" % (self.address, self.name) 
         else:
-            return "    0x" + self.address + ":(-) " + self.name
+            return "    0x%s:(-) %s" % (self.address, self.name) 
     def __repr__(self):
         if self.isPresent:
-            return "    0x" + self.address + ":(+) " + self.name 
+            return "    0x%s:(+) %s" % (self.address, self.name) 
         else:
-            return "    0x" + self.address + ":(-) " + self.name 
+            return "    0x%s:(-) %s" % (self.address, self.name)  
 
     ###################### Getters/Setters ######################
     def setIsPresent(self, isPresent):
@@ -132,6 +135,9 @@ class device(object):
 
     def getAddr(self):
         return self.address
+
+    def getType(self):
+        return self.parttype
 
     ###################### Useful Methods #######################
     def printInfo(self):
@@ -148,6 +154,8 @@ class device(object):
 ####################### Specific Device Classes ########################
 class voltageRegulator(device):
     ##################### Lists and Dictionaries #######################
+    # This is the registers of voltage regulators. You can find documentation on various regulators
+    #  looking through Agile.
     #             cmd                        hex  #bytes willdisplay
     cmd = [ ["OPERATION",                   "01",   1,  False],
             ["ON_OFF_CONFIG",               "02",   1,  False],
@@ -220,6 +228,8 @@ class voltageRegulator(device):
             ["MFR_IOUT_PEAK",               "DC",   2,  True],
             ["MFR_TEMPERATURE_PEAK",        "DD",   2,  True],
         ]
+    # This will be useful for if the user wants to get a register we don't have a function
+    #  handler for. Note this feature hasn't been implemented. 
     cmd_dict = {
         "STATUS BYTE":                 "78",
         "STATUS WORD":                 "79",
@@ -244,7 +254,6 @@ class voltageRegulator(device):
         "MFR_IOUT_PEAK":               "DC",
         "MFR_TEMPERATURE_PEAK":        "DD"
     }
-    # Dictionary mapping input commands (from the command line) to the handler function
     
     ###################### Necessaries ########################
     def __init__(self, parent_bus, address, name, partnum, parttype):
@@ -346,6 +355,8 @@ class voltageRegulator(device):
     ######################### Supported Commands ##############################
         ######### args[0] will ALWAYS be the smw from here onward #########
 
+    # Function for passing a raw hex value to the device and getting the contents. Note
+    #  this function has not been tested.
     def get_val(self, smw, command):
         if len(command) <= 2:
             # we're dealing with a hex value
@@ -372,7 +383,9 @@ class voltageRegulator(device):
                 print "command not found (2)"
                 return
 
-
+    # So for context: some of the devices with I2C addresses 0x1X actually have their commands
+    #   stored on the pmbus addresses 0x4X (for example bus 131 device 0x14 requires the functions below to call device 0x44)
+    #   This is the reason for all the "TODO"s
     def get_vout(self, args):
         if self.address[0] == "1":
             # TODO: is there an actual formula for this...? This is really hacky
@@ -507,7 +520,7 @@ class voltageRegulator(device):
                 return True
         return False
         
-
+    # dictionary to map the user's input string to one of the functions above
     valid_cmds = {
         "get_vout": get_vout,
         "get_vout_status": get_vout_status,
@@ -569,6 +582,11 @@ class bus(object):
         for dev in self.devices:
             if not dev.getIsPresent():
                 print `dev`
+    def printDevicesAndTypes(self):
+        print self.bus_number + ": " + self.bus_name
+        for dev in self.devices:
+            print "(%s)" % (dev.getType()),
+            print `dev`
     def printInfo(self):
         print "bus#:  %s" % (self.bus_number)
         print "name:  %s" % (self.bus_name)
@@ -618,12 +636,3 @@ class bus(object):
             out.append(d.getAddr())
         return out
 
-
-# ########################################################################
-# class seep(device):
-#     def __init__(self, parent_bus, address, name, parttype):
-#         super(seep, self).__init__(parent_bus, address, name, parttype)
-#     def __str__(self):
-#         super(seep, self).__str__()
-#     def __repr__(self):
-#         super(seep, self).__repr__()

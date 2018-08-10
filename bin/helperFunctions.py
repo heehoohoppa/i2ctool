@@ -12,6 +12,7 @@ def get_buses(smw):
 	text_holder = smw.callCmd("/usr/sbin/i2cdetect -l")
 
 	# go through each line, pull out the bus number
+	# this is just a bunch of string parsing
 	bus_nums = []
 	index = text_holder.find("\n")
 	
@@ -35,7 +36,6 @@ def print_all_buses(smw):
 ###################################################################
 ########################### Bus Levels ############################
 def walk_bus(smw, bus_number, exh_bus_list, pm='none'):
-	# TODO: display what each device is. Gonna do a lot of i2cget and i2cdump
 	
 	text_holder = smw.callCmd("/usr/sbin/i2cdetect -y " + bus_number)
 	text_holder = text_holder[(text_holder.find("\n")+1):]
@@ -76,6 +76,8 @@ def walk_bus(smw, bus_number, exh_bus_list, pm='none'):
 				print "    0x" + addr + ":(+) present, but can't find name"
 	return
 
+# incomplete function
+# Designed to copy an instance of exh_bus_list and set the device.isPresent variables. I think.
 def create_bus(smw, bus_num, exh_bus_list):
 	index = find_index(bus_num, exh_bus_list)
 	if index != -1:
@@ -96,32 +98,9 @@ def create_bus(smw, bus_num, exh_bus_list):
 			addresses.append(arr[i])
 	ref_addrs = exh_bus_list[index].getAddresses()
 	# Okay we have the addresses, now we just need to populate it and get the corresponding properties
-	# for a in ref_addrs:
-	# 	pass
+	for a in ref_addrs:
+		pass
 	return out_bus
-
-
-
-##################################################################
-######################### Device Levels ##########################
-''' Method to read through a CSV file with the column format:
-	  bus | bus name | addr | device name | part# | path
-	Where bus (int) is the i2c bus number, bus name (str) is the arbitrary name assigned to 
-	the bus, addr (int) is the address - stored as a hex string in the csv converted to int
-	in this method, device name (str) is the arbitrary device name, part# (str) is the Cray 
-	or manufacturer assigned part#, path (str) is the filepath on the PDC for accessing the 
-	i2c	device.
-
-	Args: csv_file = "your_file.csv"
-		  bus_nums = list of buses (int) fed from the get_bus_numbers() method
-
-	Return: list of class Device().
-'''
-def check_device(smw, bus, address):
-	pass
-
-def print_device(smw, bus, address):
-	pass # First check if the device 
 
 
 
@@ -136,13 +115,13 @@ def csv_to_bus_list(filename):
 		for row in iterable:
 			if(row[0] != current_bus):
 				bus_list.append(csvlib.bus(row[0], row[1]))
-				bus_list[len(bus_list)-1].addDevice(row[2], row[3], row[4])
+				bus_list[len(bus_list)-1].addDevice(row[2], row[3], row[4], row[5])
 				current_bus = row[0]
 			else:
-				bus_list[len(bus_list)-1].addDevice(row[2], row[3], row[4])
+				bus_list[len(bus_list)-1].addDevice(row[2], row[3], row[4], row[5])
     return bus_list
 
-
+# Function to find the index in exh_bus_list in which the bus_number resides.
 def find_index(bus_num, bus_list):
     # Gonna binary search this bitch
     bus_num = int(bus_num)
@@ -203,6 +182,7 @@ get_device <hexaddr>
 goto_device <hexaddr>
 	- move to the device level
 """
+
 def dev_help():
 	global_help()
 	print """
